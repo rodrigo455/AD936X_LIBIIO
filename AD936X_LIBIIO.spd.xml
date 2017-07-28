@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE softpkg PUBLIC "-//JTRS//DTD SCA V2.2.2 SPD//EN" "softpkg.dtd">
+<softpkg id="DCE:c99d9140-2d7f-4ee5-a953-2f949b8050d3" name="AD936X_LIBIIO" type="2.1.0">
+  <title></title>
+  <author>
+    <name>null</name>
+  </author>
+  <propertyfile type="PRF">
+    <localfile name="AD936X_LIBIIO.prf.xml"/>
+  </propertyfile>
+  <descriptor>
+    <localfile name="AD936X_LIBIIO.scd.xml"/>
+  </descriptor>
+  <implementation id="cpp">
+    <description>Implementation of a RedHawk SDR FrontEnd Interface for an AD936x IIO Device</description>
+    <code type="Executable">
+      <localfile name="cpp/AD936X_LIBIIO"/>
+      <entrypoint>cpp/AD936X_LIBIIO</entrypoint>
+    </code>
+    <compiler name="/usr/bin/gcc" version="4.4.7"/>
+    <programminglanguage name="C++"/>
+    <humanlanguage name="EN"/>
+    <os name="Linux"/>
+    <processor name="x86"/>
+    <processor name="x86_64"/>
+  </implementation>
+</softpkg>

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties PUBLIC "-//JTRS//DTD SCA V2.2.2 PRF//EN" "properties.dtd">
+<properties>
+  <simple id="global_group_id" mode="readwrite" name="global_group_id" type="string">
+    <description>Any allocations requested on this device must have a matching group_id field (ie - the group_id value defined in the allocation structure must match the group_id for the device). These values default to an empty string and therefore match by default.  
+Please see the Frontend Interfaces v2.0 documentation for a full description. </description>
+    <kind kindtype="property"/>
+    <action type="external"/>
+  </simple>
+  <simple id="DCE:cdc5ee18-7ceb-4ae6-bf4c-31f983179b4d" mode="readonly" name="device_kind" type="string">
+    <description>This specifies the device kind</description>
+    <value>FRONTEND::TUNER</value>
+    <kind kindtype="allocation"/>
+    <action type="eq"/>
+  </simple>
+  <simple id="DCE:0f99b2e4-9903-4631-9846-ff349d18ecfb" mode="readonly" name="device_model" type="string">
+    <description> This specifies the specific device</description>
+    <value>AD936X</value>
+    <kind kindtype="allocation"/>
+    <action type="eq"/>
+  </simple>
+  <structsequence id="FRONTEND::tuner_status" mode="readonly" name="frontend_tuner_status">
+    <description>Status of each tuner, including entries for both allocated and un-allocated tuners. Each entry represents a single tuner.</description>
+    <struct id="FRONTEND::tuner_status_struct" name="frontend_tuner_status_struct">
+      <simple id="FRONTEND::tuner_status::allocation_id_csv" name="allocation_id_csv" type="string">
+        <description>Comma separated list of current Allocation IDs.</description>
+      </simple>
+      <simple id="FRONTEND::tuner_status::bandwidth" name="bandwidth" type="double">
+        <description>Current bandwidth in Hz</description>
+        <units>Hz</units>
+      </simple>
+      <simple id="FRONTEND::tuner_status::center_frequency" name="center_frequency" type="double">
+        <description>Current center frequency in Hz.</description>
+        <units>Hz</units>
+      </simple>
+      <simple id="FRONTEND::tuner_status::enabled" name="enabled" type="boolean">
+        <description>Indicates if tuner is enabled, in reference to the output state of the tuner.</description>
+      </simple>
+      <simple id="FRONTEND::tuner_status::group_id" name="group_id" type="string">
+        <description>Unique ID that specifies a group of Device.</description>
+      </simple>
+      <simple id="FRONTEND::tuner_status::rf_flow_id" name="rf_flow_id" type="string">
+        <description>Specifies a certain RF flow to allocate against.</description>
+      </simple>
+      <simple id="FRONTEND::tuner_status::sample_rate" name="sample_rate" type="double">
+        <description>Current sample rate in samples per second.</description>
+        <units>sps</units>
+      </simple>
+      <simple id="FRONTEND::tuner_status::tuner_type" name="tuner_type" type="string">
+        <description>Example Tuner Types: TX, RX, CHANNELIZER, DDC, RX_DIGITIZER, RX_DIGTIZIER_CHANNELIZER</description>
+      </simple>
+      <simple id="FRONTEND::tuner_status::rf_port_select" name="rf_port_select" type="string"/>
+      <simple id="FRONTEND::tuner_status::stream_id" name="stream_id" type="string"/>
+      <simple id="FRONTEND::tuner_status::bandwidth_tolerance" name="bandwidth_tolerance" type="double">
+        <units>%</units>
+      </simple>
+      <simple id="FRONTEND::tuner_status::sample_rate_tolerance" name="sample_rate_tolerance" type="double">
+        <units>%</units>
+      </simple>
+    </struct>
+    <configurationkind kindtype="property"/>
+  </structsequence>
+  <struct id="FRONTEND::listener_allocation" name="frontend_listener_allocation">
+    <description>Frontend Interfaces v2 listener allocation structure</description>
+    <simple id="FRONTEND::listener_allocation::existing_allocation_id" type="string"/>
+    <simple id="FRONTEND::listener_allocation::listener_allocation_id" type="string"/>
+    <configurationkind kindtype="allocation"/>
+  </struct>
+  <struct id="FRONTEND::tuner_allocation" name="frontend_tuner_allocation">
+    <description>Frontend Interfaces v2 main allocation structure</description>
+    <simple id="FRONTEND::tuner_allocation::tuner_type" name="tuner_type" type="string">
+      <description>Example Tuner Types: TX, RX, CHANNELIZER, DDC, RX_DIGITIZER, RX_DIGTIZIER_CHANNELIZER</description>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::allocation_id" name="allocation_id" type="string">
+      <description>The allocation_id set by the caller. Used by the caller to reference the allocation uniquely</description>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::center_frequency" name="center_frequency" type="double">
+      <description>Requested center frequency</description>
+      <units>Hz</units>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::bandwidth" name="bandwidth" type="double">
+      <description>Requested bandwidth (+/- the tolerance)</description>
+      <units>Hz</units>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::bandwidth_tolerance" name="bandwidth_tolerance" type="double">
+      <description>Allowable Percent above requested bandwidth  (ie - 100 would be up to twice)</description>
+      <units>percent</units>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::sample_rate" name="sample_rate" type="double">
+      <description>Requested sample rate (+/- the tolerance). This can be ignored for such devices as analog tuners</description>
+      <units>Hz</units>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::sample_rate_tolerance" name="sample_rate_tolerance" type="double">
+      <description>Allowable Percent above requested sample rate (ie - 100 would be up to twice)</description>
+      <units>percent</units>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::device_control" name="device_control" type="boolean">
+      <description>True: Has control over the device to make changes
+False: Does not need control and can just attach to any currently tasked device that satisfies the parameters (essentually a listener)</description>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::group_id" name="group_id" type="string">
+      <description>Unique identifier that specifies the group a device must be in. Must match group_id on the device</description>
+    </simple>
+    <simple id="FRONTEND::tuner_allocation::rf_flow_id" name="rf_flow_id" type="string">
+      <description>Optional. Specifies the RF flow of a specific input source to allocate against. If left empty, it will match all FrontEnd devices.</description>
+    </simple>
+    <configurationkind kindtype="allocation"/>
+  </struct>
+  <structsequence id="connectionTable" mode="readonly">
+    <struct id="connectionTable::connection_descriptor" name="connection_descriptor">
+      <simple id="connectionTable::connection_id" name="connection_id" type="string"/>
+      <simple id="connectionTable::stream_id" name="stream_id" type="string"/>
+      <simple id="connectionTable::port_name" name="port_name" type="string"/>
+    </struct>
+    <configurationkind kindtype="property"/>
+  </structsequence>
+  <struct id="global_settings" mode="readwrite" name="global_settings">
+    <simple id="filter_fir_config" name="filter_fir_config" type="string">
+      <description>Complete name of the file with filter configuration</description>
+    </simple>
+    <simple id="dcxo_tune_coarse" name="dcxo_tune_coarse" type="long">
+      <description>Digital Controlled Crystal Oscillator Tuning
+sets a coarse capacitor value
+*This feature does not exist on the AD9363</description>
+    </simple>
+    <simple id="dcxo_tune_fine" name="dcxo_tune_fine" type="long">
+      <description>Digital Controlled Crystal Oscillator Tuning
+sets a fine capacitor value
+*This feature does not exist on the AD9363</description>
+    </simple>
+    <simple id="xo_correction" name="xo_correction" type="long">
+      <description>Digital correction for the oscillator offset, by telling the system the actual oscillator</description>
+    </simple>
+    <simple id="filter_fir_en" name="filter_fir_en" type="boolean">
+      <description>Enable or Disable the RX or TX path filters</description>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <configurationkind kindtype="property"/>
+  </struct>
+  <struct id="receive_chain" mode="readwrite" name="receive_chain">
+    <simple id="rx_rf_bandwidth" name="rf_bandwidth" type="double">
+      <description>RX RF Bandwidth Control</description>
+      <value>200000</value>
+      <units>Hz</units>
+      <range max="56000000" min="200000"/>
+    </simple>
+    <simple id="rx_sampling_frequency" name="sampling_frequency" type="double">
+      <description>Sets the RX Sample Rate</description>
+      <value>2500000</value>
+      <units>sps</units>
+    </simple>
+    <simple id="rx_frequency" name="frequency" type="double">
+      <description>RX Local Oscillator Control</description>
+      <value>70000000</value>
+      <units>Hz</units>
+      <range max="6000000000" min="70000000"/>
+    </simple>
+    <simple id="rx_lo_external" name="rx_lo_external" type="boolean">
+      <description>External LO Support
+*This feature does not exist on the AD9363</description>
+      <value>false</value>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <simple id="rx_rf_port_select" name="rf_port_select" type="string">
+      <description>RF port used by the receive chain</description>
+      <value>A_BALANCED</value>
+      <enumerations>
+        <enumeration label="A_BALANCED" value="A_BALANCED"/>
+        <enumeration label="B_BALANCED" value="B_BALANCED"/>
+      </enumerations>
+    </simple>
+    <simple id="quadrature_tracking_en" name="quadrature_tracking_en" type="boolean">
+      <description>Calibration Tracking Controls</description>
+      <value>true</value>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <simple id="rf_dc_offset_tracking_en" name="rf_dc_offset_tracking_en" type="boolean">
+      <description>Calibration Tracking Controls</description>
+      <value>true</value>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <simple id="bb_dc_offset_tracking_en" name="bb_dc_offset_tracking_en" type="boolean">
+      <description>Calibration Tracking Controls</description>
+      <value>true</value>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <simple id="rx1_hardwaregain" name="rx1_hardwaregain" type="double">
+      <description>sets the current Gain for RX1 only if Gain Control Mode is Manual</description>
+      <value>73</value>
+      <units>dB</units>
+    </simple>
+    <simple id="rx1_gain_control_mode" name="rx1_gain_control_mode" type="string">
+      <description>Sets a Gain Control Mode for RX1</description>
+      <value>slow_attack</value>
+      <enumerations>
+        <enumeration label="manual" value="manual"/>
+        <enumeration label="fast_attack" value="fast_attack"/>
+        <enumeration label="slow_attack" value="slow_attack"/>
+        <enumeration label="hybrid" value="hybrid"/>
+      </enumerations>
+    </simple>
+    <simple id="rx2_hardwaregain" name="rx2_hardwaregain" type="double">
+      <description>sets the current Gain for RX2 only if Gain Control Mode is Manual
+*This feature does not exist on the AD9364</description>
+      <value>73</value>
+      <units>dB</units>
+    </simple>
+    <simple id="rx2_gain_control_mode" name="rx2_gain_control_mode" type="string">
+      <description>Sets a Gain Control Mode for RX2
+*This feature does not exist on the AD9364</description>
+      <value>slow_attack</value>
+      <enumerations>
+        <enumeration label="manual" value="manual"/>
+        <enumeration label="fast_attack" value="fast_attack"/>
+        <enumeration label="slow_attack" value="slow_attack"/>
+        <enumeration label="hybrid" value="hybrid"/>
+      </enumerations>
+    </simple>
+    <configurationkind kindtype="property"/>
+  </struct>
+  <struct id="transmit_chain" mode="readwrite" name="transmit_chain">
+    <simple id="tx_rf_bandwidth" name="rf_bandwidth" type="double">
+      <description>TX RF Bandwidth Control</description>
+      <value>200000</value>
+      <units>Hz</units>
+      <range max="56000000" min="200000"/>
+    </simple>
+    <simple id="tx_sampling_frequency" name="sampling_frequency" type="double">
+      <description>Sets the TX Sample Rate</description>
+      <value>2500000</value>
+      <units>sps</units>
+    </simple>
+    <simple id="tx_frequency" name="frequency" type="double">
+      <description>TX Local Oscillator Control</description>
+      <value>70000000</value>
+      <units>Hz</units>
+      <range max="6000000000" min="70000000"/>
+    </simple>
+    <simple id="tx_lo_external" name="tx_lo_external" type="boolean">
+      <description>External LO Support
+*This feature does not exist on the AD9363</description>
+      <value>false</value>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <simple id="tx_rf_port_select" name="rf_port_select" type="string">
+      <description>RF port used by the transmit chain</description>
+      <value>A</value>
+      <enumerations>
+        <enumeration label="A" value="A"/>
+        <enumeration label="B" value="B"/>
+      </enumerations>
+    </simple>
+    <simple id="tx1_hardwaregain" name="tx1_hardwaregain" type="double">
+      <description>Tx Attenuation Control for TX1</description>
+      <value>-10</value>
+      <units>dB</units>
+    </simple>
+    <simple id="tx2_hardwaregain" name="tx2_hardwaregain" type="double">
+      <description>Tx Attenuation Control for TX2
+*This feature does not exist on the AD9364</description>
+      <value>-10</value>
+      <units>dB</units>
+    </simple>
+    <configurationkind kindtype="property"/>
+  </struct>
+  <struct id="target_device" mode="readwrite" name="target_device">
+    <description>Information used to specify a particular AD936x device to target.</description>
+    <simple id="context_uri" name="context_uri" type="string">
+      <value></value>
+    </simple>
+    <simple id="type" name="type" type="string">
+      <value>ad9361</value>
+      <enumerations>
+        <enumeration label="AD9361" value="ad9361"/>
+        <enumeration label="AD9363" value="ad9363"/>
+        <enumeration label="AD9364" value="ad9364"/>
+      </enumerations>
+    </simple>
+    <simple id="name" name="name" type="string">
+      <description>Name of the AD836X device</description>
+      <value></value>
+    </simple>
+    <simple id="serial" name="serial" type="string">
+      <description>Serial number of the AD936X device</description>
+      <value></value>
+    </simple>
+    <configurationkind kindtype="property"/>
+  </struct>
+</properties>
