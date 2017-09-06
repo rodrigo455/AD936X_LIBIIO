@@ -203,6 +203,7 @@ int AD936X_LIBIIO_i::serviceFunctionReceive(){
 					if (ad936x_tuners[tuner_id].update_sri){
 						LOG_DEBUG(AD936X_LIBIIO_i,"AD936X_LIBIIO_i::serviceFunctionReceive|creating SRI for tuner: "<<tuner_id<<" with stream id: "<< stream_id);
 						BULKIO::StreamSRI sri = create(stream_id, frontend_tuner_status[tuner_id]);
+						sri.xdelta = sri.xdelta*receive_chain.software_decimation;
 						sri.mode = 1; // complex
 						dataShortRX_out->pushSRI(sri);
 						ad936x_tuners[tuner_id].update_sri = false;
@@ -234,13 +235,19 @@ int AD936X_LIBIIO_i::serviceFunctionTransmit(){
 
 	if(tx_buffer){
 
+		if(transmit_chain.software_interpolation > 1){
+			// init buffer with zeros
+			ptrdiff_t len = (intptr_t) iio_buffer_end(tx_buffer) - (intptr_t) iio_buffer_start(tx_buffer);
+			memset(iio_buffer_start(tx_buffer),0,len);
+		}
+
 		bulkio::InShortStream stream = dataShortTX_in->getCurrentStream(0);
 
 		if(!stream){
 			return NOOP;
 		}
 
-		bulkio::ShortDataBlock block = stream.read(buffer_size);
+		bulkio::ShortDataBlock block = stream.read(buffer_size/transmit_chain.software_interpolation);
 
 		if(!block){
 			LOG_DEBUG(AD936X_LIBIIO_i,"AD936X_LIBIIO_i::serviceFunctionTransmit| stream has ended.");
@@ -486,6 +493,44 @@ void AD936X_LIBIIO_i::receiveChainChanged(const receive_chain_struct& old_value,
 
 	if(!isAD9364 && new_value.rx2_gain_control_mode != old_value.rx2_gain_control_mode)
 		iio_channel_attr_write(ad936x_tuners[2].config, "gain_control_mode", new_value.rx2_gain_control_mode.c_str());
+
+	if(new_value.software_decimation != old_value.software_decimation){
+
+		bool enabled = false;
+
+		for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){
+			if(frontend_tuner_status[tuner_id].enabled){
+				enabled = true;
+				break;
+			}
+		}
+
+		if(!enabled){
+
+			{
+				enqueued_scoped_lock buf_lock(tx_buffer_lock);
+
+				if(new_value.software_decimation < 1)
+					receive_chain.software_decimation = 1;
+				else
+					receive_chain.software_decimation = new_value.software_decimation;
+
+				buffer_size = size_t((buffer_size / sizeof(short))
+								/ (receive_chain.software_decimation
+										* transmit_chain.software_interpolation))
+								* (receive_chain.software_decimation
+										* transmit_chain.software_interpolation);
+			}
+
+			ad936x_tuners[0].buffer.resize(2*buffer_size/receive_chain.software_decimation);
+			if(!isAD9364)
+				ad936x_tuners[3].buffer.resize(2*buffer_size/receive_chain.software_decimation);
+
+		}else{
+			receive_chain.software_decimation = old_value.software_decimation;
+			LOG_WARN(AD936X_LIBIIO_i,"Cannot change software decimation with enabled tuners");
+		}
+	}
 }
 
 void AD936X_LIBIIO_i::transmitChainChanged(const transmit_chain_struct& old_value, const transmit_chain_struct& new_value){
@@ -517,6 +562,40 @@ void AD936X_LIBIIO_i::transmitChainChanged(const transmit_chain_struct& old_valu
 	if(!isAD9364 && new_value.tx2_hardwaregain != old_value.tx2_hardwaregain){
 		iio_channel_attr_write_longlong(ad936x_tuners[3].config,"hardwaregain",(long long)new_value.tx2_hardwaregain);
 		iio_channel_attr_read_double(ad936x_tuners[3].config,"hardwaregain", &transmit_chain.tx2_hardwaregain);
+	}
+
+	if(new_value.software_interpolation != old_value.software_interpolation){
+
+		bool enabled = false;
+
+		for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){
+			if(frontend_tuner_status[tuner_id].enabled){
+				enabled = true;
+				break;
+			}
+		}
+
+		if(!enabled){
+
+			{
+				enqueued_scoped_lock buf_lock(rx_buffer_lock);
+
+				if(new_value.software_interpolation < 1)
+					transmit_chain.software_interpolation = 1;
+				else
+					transmit_chain.software_interpolation = new_value.software_interpolation;
+
+				buffer_size = size_t((buffer_size / sizeof(short))
+									/ (receive_chain.software_decimation
+											* transmit_chain.software_interpolation))
+									* (receive_chain.software_decimation
+											* transmit_chain.software_interpolation);
+			}
+
+		}else{
+			transmit_chain.software_interpolation = old_value.software_interpolation;
+			LOG_WARN(AD936X_LIBIIO_i,"Cannot change software interpolation with enabled tuners");
+		}
 	}
 }
 
@@ -615,6 +694,7 @@ void AD936X_LIBIIO_i::deviceEnable(frontend_tuner_status_struct_struct &fts, siz
 		if(!prev_enabled){
 			LOG_DEBUG(AD936X_LIBIIO_i,"AD936X_LIBIIO_i::tunerEnable|creating SRI for tuner: "<<tuner_id<<" with stream id: "<< stream_id);
 			BULKIO::StreamSRI sri = create(stream_id, frontend_tuner_status[tuner_id]);
+			sri.xdelta = sri.xdelta*receive_chain.software_decimation;
 			sri.mode = 1; // complex
 			dataShortRX_out->pushSRI(sri);
 			ad936x_tuners[tuner_id].update_sri = false;
@@ -1145,7 +1225,12 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
 			iio_channel_disable(iio_device_get_channel(tx_device, i));
 
     	const size_t max_payload_size    = (size_t) (bulkio::Const::MAX_TRANSFER_BYTES * .3);
-    	buffer_size = size_t((max_payload_size/sizeof(short))/1024)*1024;
+		buffer_size = size_t(
+				(max_payload_size / sizeof(short))
+						/ (1024 * receive_chain.software_decimation
+								* transmit_chain.software_interpolation))
+				* (1024 * receive_chain.software_decimation
+						* transmit_chain.software_interpolation);
 
     	rx_LO = iio_device_find_channel(phy, "altvoltage0", true);
     	tx_LO = iio_device_find_channel(phy, "altvoltage1", true);
@@ -1167,7 +1252,7 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
     	ad936x_tuners[0].inphase = iio_device_find_channel(rx_device, "voltage0", false);
     	ad936x_tuners[0].quadrature = iio_device_find_channel(rx_device, "voltage1", false);
     	ad936x_tuners[0].config = iio_device_find_channel(phy, "voltage0", false);
-    	ad936x_tuners[0].buffer.resize(2*buffer_size);
+    	ad936x_tuners[0].buffer.resize(2*buffer_size/receive_chain.software_decimation);
 
     	ad936x_tuners[1].inphase = iio_device_find_channel(tx_device, "voltage0", true);
 		ad936x_tuners[1].quadrature = iio_device_find_channel(tx_device, "voltage1", true);
@@ -1184,7 +1269,7 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
     		ad936x_tuners[2].inphase = iio_device_find_channel(rx_device, "voltage2", false);
 			ad936x_tuners[2].quadrature = iio_device_find_channel(rx_device, "voltage3", false);
 			ad936x_tuners[2].config = iio_device_find_channel(phy, "voltage1", false);
-			ad936x_tuners[2].buffer.resize(2*buffer_size);
+			ad936x_tuners[2].buffer.resize(2*buffer_size/receive_chain.software_decimation);
 
 			ad936x_tuners[3].inphase = iio_device_find_channel(tx_device, "voltage2", true);
 			ad936x_tuners[3].quadrature = iio_device_find_channel(tx_device, "voltage3", true);
@@ -1447,7 +1532,7 @@ void AD936X_LIBIIO_i::tunerReceive(size_t tuner_id, short *output){
 	uintptr_t p_dat, p_end;
 	ptrdiff_t p_inc;
 
-	p_inc = iio_buffer_step(rx_buffer);
+	p_inc = iio_buffer_step(rx_buffer)*receive_chain.software_decimation;
 	p_end = (uintptr_t) iio_buffer_end(rx_buffer);
 	for (p_dat = (uintptr_t)iio_buffer_first(rx_buffer, ad936x_tuners[tuner_id].inphase); p_dat < p_end; p_dat += p_inc) {
 		*(output++) = ((short*)p_dat)[0]; // Real (I)
@@ -1491,7 +1576,7 @@ void AD936X_LIBIIO_i::tunerTransmit(size_t tuner_id, bulkio::ShortDataBlock bloc
 		ad936x_tuners[tuner_id].update_sri = false;
 	}
 
-	p_inc = iio_buffer_step(tx_buffer);
+	p_inc = iio_buffer_step(tx_buffer)*transmit_chain.software_interpolation;
 	p_end = (uintptr_t) iio_buffer_end(tx_buffer);
 	for(p_dat = (uintptr_t)iio_buffer_first(tx_buffer, ad936x_tuners[tuner_id].inphase), count = 0;
 			p_dat < p_end || count < block.cxsize();

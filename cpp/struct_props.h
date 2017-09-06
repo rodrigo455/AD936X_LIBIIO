@@ -18,15 +18,11 @@ typedef bulkio::connection_descriptor_struct connection_descriptor_struct;
 struct global_settings_struct {
     global_settings_struct ()
     {
-    }
+    };
 
     static std::string getId() {
         return std::string("global_settings");
-    }
-
-    static const char* getFormat() {
-        return "siiib";
-    }
+    };
 
     std::string filter_fir_config;
     CORBA::Long dcxo_tune_coarse;
@@ -105,15 +101,12 @@ struct receive_chain_struct {
         rx1_gain_control_mode = "slow_attack";
         rx2_hardwaregain = 73;
         rx2_gain_control_mode = "slow_attack";
-    }
+        software_decimation = 1;
+    };
 
     static std::string getId() {
         return std::string("receive_chain");
-    }
-
-    static const char* getFormat() {
-        return "dddbsbbbdsds";
-    }
+    };
 
     double rf_bandwidth;
     double sampling_frequency;
@@ -127,6 +120,7 @@ struct receive_chain_struct {
     std::string rx1_gain_control_mode;
     double rx2_hardwaregain;
     std::string rx2_gain_control_mode;
+    CORBA::Long software_decimation;
 };
 
 inline bool operator>>= (const CORBA::Any& a, receive_chain_struct& s) {
@@ -169,6 +163,9 @@ inline bool operator>>= (const CORBA::Any& a, receive_chain_struct& s) {
     if (props.contains("rx2_gain_control_mode")) {
         if (!(props["rx2_gain_control_mode"] >>= s.rx2_gain_control_mode)) return false;
     }
+    if (props.contains("software_decimation")) {
+        if (!(props["software_decimation"] >>= s.software_decimation)) return false;
+    }
     return true;
 }
 
@@ -198,6 +195,8 @@ inline void operator<<= (CORBA::Any& a, const receive_chain_struct& s) {
     props["rx2_hardwaregain"] = s.rx2_hardwaregain;
  
     props["rx2_gain_control_mode"] = s.rx2_gain_control_mode;
+ 
+    props["software_decimation"] = s.software_decimation;
     a <<= props;
 }
 
@@ -226,6 +225,8 @@ inline bool operator== (const receive_chain_struct& s1, const receive_chain_stru
         return false;
     if (s1.rx2_gain_control_mode!=s2.rx2_gain_control_mode)
         return false;
+    if (s1.software_decimation!=s2.software_decimation)
+        return false;
     return true;
 }
 
@@ -243,15 +244,12 @@ struct transmit_chain_struct {
         rf_port_select = "A";
         tx1_hardwaregain = -10;
         tx2_hardwaregain = -10;
-    }
+        software_interpolation = 1;
+    };
 
     static std::string getId() {
         return std::string("transmit_chain");
-    }
-
-    static const char* getFormat() {
-        return "dddbsdd";
-    }
+    };
 
     double rf_bandwidth;
     double sampling_frequency;
@@ -260,6 +258,7 @@ struct transmit_chain_struct {
     std::string rf_port_select;
     double tx1_hardwaregain;
     double tx2_hardwaregain;
+    CORBA::Long software_interpolation;
 };
 
 inline bool operator>>= (const CORBA::Any& a, transmit_chain_struct& s) {
@@ -287,6 +286,9 @@ inline bool operator>>= (const CORBA::Any& a, transmit_chain_struct& s) {
     if (props.contains("tx2_hardwaregain")) {
         if (!(props["tx2_hardwaregain"] >>= s.tx2_hardwaregain)) return false;
     }
+    if (props.contains("software_interpolation")) {
+        if (!(props["software_interpolation"] >>= s.software_interpolation)) return false;
+    }
     return true;
 }
 
@@ -306,6 +308,8 @@ inline void operator<<= (CORBA::Any& a, const transmit_chain_struct& s) {
     props["tx1_hardwaregain"] = s.tx1_hardwaregain;
  
     props["tx2_hardwaregain"] = s.tx2_hardwaregain;
+ 
+    props["software_interpolation"] = s.software_interpolation;
     a <<= props;
 }
 
@@ -324,6 +328,8 @@ inline bool operator== (const transmit_chain_struct& s1, const transmit_chain_st
         return false;
     if (s1.tx2_hardwaregain!=s2.tx2_hardwaregain)
         return false;
+    if (s1.software_interpolation!=s2.software_interpolation)
+        return false;
     return true;
 }
 
@@ -338,15 +344,11 @@ struct target_device_struct {
         type = "ad9361";
         name = "";
         serial = "";
-    }
+    };
 
     static std::string getId() {
         return std::string("target_device");
-    }
-
-    static const char* getFormat() {
-        return "ssss";
-    }
+    };
 
     std::string context_uri;
     std::string type;
@@ -405,15 +407,11 @@ inline bool operator!= (const target_device_struct& s1, const target_device_stru
 struct frontend_tuner_status_struct_struct : public frontend::default_frontend_tuner_status_struct_struct {
     frontend_tuner_status_struct_struct () : frontend::default_frontend_tuner_status_struct_struct()
     {
-    }
+    };
 
     static std::string getId() {
         return std::string("FRONTEND::tuner_status_struct");
-    }
-
-    static const char* getFormat() {
-        return "sddbssdsssdd";
-    }
+    };
 
     std::string rf_port_select;
     std::string stream_id;

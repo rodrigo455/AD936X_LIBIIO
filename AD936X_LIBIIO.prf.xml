@@ -231,6 +231,9 @@ sets a fine capacitor value
         <enumeration label="hybrid" value="hybrid"/>
       </enumerations>
     </simple>
+    <simple id="software_decimation" type="long">
+      <value>1</value>
+    </simple>
     <configurationkind kindtype="property"/>
   </struct>
   <struct id="transmit_chain" mode="readwrite" name="transmit_chain">
@@ -278,6 +281,9 @@ sets a fine capacitor value
 *This feature does not exist on the AD9364</description>
       <value>-10</value>
       <units>dB</units>
+    </simple>
+    <simple id="software_interpolation" type="long">
+      <value>1</value>
     </simple>
     <configurationkind kindtype="property"/>
   </struct>

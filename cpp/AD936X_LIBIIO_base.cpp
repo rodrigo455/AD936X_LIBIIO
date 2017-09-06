@@ -40,27 +40,27 @@ AD936X_LIBIIO_base::AD936X_LIBIIO_base(char *devMgr_ior, char *id, char *lbl, ch
 
 AD936X_LIBIIO_base::~AD936X_LIBIIO_base()
 {
-    RX1A_0->_remove_ref();
+    delete RX1A_0;
     RX1A_0 = 0;
-    RX1B_1->_remove_ref();
+    delete RX1B_1;
     RX1B_1 = 0;
-    RX2A_2->_remove_ref();
+    delete RX2A_2;
     RX2A_2 = 0;
-    RX2B_3->_remove_ref();
+    delete RX2B_3;
     RX2B_3 = 0;
-    DigitalTuner_in->_remove_ref();
+    delete DigitalTuner_in;
     DigitalTuner_in = 0;
-    dataShortTX_in->_remove_ref();
+    delete dataShortTX_in;
     dataShortTX_in = 0;
-    TX1A_0->_remove_ref();
+    delete TX1A_0;
     TX1A_0 = 0;
-    TX1B_1->_remove_ref();
+    delete TX1B_1;
     TX1B_1 = 0;
-    TX2A_2->_remove_ref();
+    delete TX2A_2;
     TX2A_2 = 0;
-    TX2B_3->_remove_ref();
+    delete TX2B_3;
     TX2B_3 = 0;
-    dataShortRX_out->_remove_ref();
+    delete dataShortRX_out;
     dataShortRX_out = 0;
 }
 
@@ -174,7 +174,7 @@ void AD936X_LIBIIO_base::loadProperties()
     addProperty(target_device,
                 target_device_struct(),
                 "target_device",
-                "",
+                "target_device",
                 "readwrite",
                 "",
                 "external",

@@ -34,4 +34,4 @@ AD936X_LIBIIO_CXXFLAGS = -Wall $(SOFTPKG_CFLAGS) $(PROJECTDEPS_CFLAGS) $(BOOST_C
 AD936X_LIBIIO_LDFLAGS = -Wall $(redhawk_LDFLAGS_auto)
 
 create-ad936x-libiio-node: install-am
-	../nodeconfig.py --inplace --clean --domainname=$(DOMAINNAME) --ad936xtype=$(AD936XTYPE) --ad936xcontexturi=$(CONTEXTURI)
+	../nodeconfig.py --clean --domainname=$(DOMAINNAME) --ad936xtype=$(AD936XTYPE) --ad936xcontexturi=$(CONTEXTURI)

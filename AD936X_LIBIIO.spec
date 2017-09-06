@@ -20,13 +20,13 @@ License:        None
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  redhawk-devel >= 2.1
-Requires:       redhawk >= 2.1
+BuildRequires:  redhawk-devel >= 2.0
+Requires:       redhawk >= 2.0
 
 
 # Interface requirements
-BuildRequires:  frontendInterfaces >= 2.4 bulkioInterfaces >= 2.1
-Requires:       frontendInterfaces >= 2.4 bulkioInterfaces >= 2.1
+BuildRequires:  frontendInterfaces >= 2.2 bulkioInterfaces >= 2.0
+Requires:       frontendInterfaces >= 2.2 bulkioInterfaces >= 2.0
 
 
 %description
@@ -65,9 +65,6 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,redhawk,redhawk,-)
 %dir %{_sdrroot}/dev/devices/AD936X_LIBIIO
-%{_prefix}/dev/devices/AD936X_LIBIIO/nodeconfig.py
-%{_prefix}/dev/devices/AD936X_LIBIIO/nodeconfig.pyc
-%{_prefix}/dev/devices/AD936X_LIBIIO/nodeconfig.pyo
 %{_prefix}/dev/devices/AD936X_LIBIIO/AD936X_LIBIIO.scd.xml
 %{_prefix}/dev/devices/AD936X_LIBIIO/AD936X_LIBIIO.prf.xml
 %{_prefix}/dev/devices/AD936X_LIBIIO/AD936X_LIBIIO.spd.xml
