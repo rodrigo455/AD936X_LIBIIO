@@ -1337,8 +1337,15 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
 
 void AD936X_LIBIIO_i::updateReceiveFrequency(double frequency){
 
-	if(frequency)
-		iio_channel_attr_write_longlong(rx_LO,"frequency",(long long)frequency);
+	if(frequency){
+		double freq_in, freq_out=0.0;
+		freq_in = frequency;
+		while(freq_out < frequency){
+			iio_channel_attr_write_longlong(rx_LO,"frequency",(long long)freq_in);
+			iio_channel_attr_read_double(rx_LO,"frequency", &freq_out);
+			freq_in++;
+		}
+	}
 
 	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id+=2){ //iterate over RX tuners
 		iio_channel_attr_read_double(rx_LO,"frequency", &frontend_tuner_status[tuner_id].center_frequency);
@@ -1350,8 +1357,15 @@ void AD936X_LIBIIO_i::updateReceiveFrequency(double frequency){
 
 void AD936X_LIBIIO_i::updateReceiveBandwidth(double bandwidth){
 
-	if(bandwidth)
-		iio_channel_attr_write_longlong(ad936x_tuners[0].config,"rf_bandwidth",(long long)bandwidth);
+	if(bandwidth){
+		double bw_in, bw_out=0.0;
+		bw_in = bandwidth;
+		while(bw_out < bandwidth){
+			iio_channel_attr_write_longlong(ad936x_tuners[0].config,"rf_bandwidth", (long long)bw_in);
+			iio_channel_attr_read_double(ad936x_tuners[0].config,"rf_bandwidth", &bw_out);
+			bw_in++;
+		}
+	}
 
 	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id+=2){ //iterate over RX tuners
 		iio_channel_attr_read_double(ad936x_tuners[tuner_id].config,"rf_bandwidth", &frontend_tuner_status[tuner_id].bandwidth);
@@ -1363,8 +1377,15 @@ void AD936X_LIBIIO_i::updateReceiveBandwidth(double bandwidth){
 
 void AD936X_LIBIIO_i::updateReceiveSampleRate(double sampleRate){
 
-	if(sampleRate)
-		iio_channel_attr_write_longlong(ad936x_tuners[0].config,"sampling_frequency",(long long)sampleRate);
+	if(sampleRate){
+		double sr_in, sr_out=0.0;
+		sr_in = sampleRate;
+		while(sr_out < sampleRate){
+			iio_channel_attr_write_longlong(ad936x_tuners[0].config,"sampling_frequency",(long long)sr_in);
+			iio_channel_attr_read_double(ad936x_tuners[0].config,"sampling_frequency", &sr_out);
+			sr_in++;
+		}
+	}
 
 	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){ //iterate over all tuners
 		iio_channel_attr_read_double(ad936x_tuners[tuner_id].config,"sampling_frequency", &frontend_tuner_status[tuner_id].sample_rate);
@@ -1399,8 +1420,15 @@ void AD936X_LIBIIO_i::updateReceivePort(const std::string& rf_port){
 
 void AD936X_LIBIIO_i::updateTransmitFrequency(double frequency){
 
-	if(frequency)
-		iio_channel_attr_write_longlong(tx_LO,"frequency",(long long)frequency);
+	if(frequency){
+		double freq_in, freq_out=0.0;
+		freq_in = frequency;
+		while(freq_out < frequency){
+			iio_channel_attr_write_longlong(tx_LO,"frequency",(long long)freq_in);
+			iio_channel_attr_read_double(tx_LO,"frequency", &freq_out);
+			freq_in++;
+		}
+	}
 
 	for(size_t tuner_id = 1; tuner_id < ad936x_tuners.size(); tuner_id+=2){ //iterate over TX tuners
 		iio_channel_attr_read_double(tx_LO,"frequency", &frontend_tuner_status[tuner_id].center_frequency);
@@ -1412,8 +1440,15 @@ void AD936X_LIBIIO_i::updateTransmitFrequency(double frequency){
 
 void AD936X_LIBIIO_i::updateTransmitBandwidth(double bandwidth){
 
-	if(bandwidth)
-		iio_channel_attr_write_longlong(ad936x_tuners[1].config,"rf_bandwidth",(long long)bandwidth);
+	if(bandwidth){
+		double bw_in, bw_out=0.0;
+		bw_in = bandwidth;
+		while(bw_out < bandwidth){
+			iio_channel_attr_write_longlong(ad936x_tuners[1].config,"rf_bandwidth", (long long)bw_in);
+			iio_channel_attr_read_double(ad936x_tuners[1].config,"rf_bandwidth", &bw_out);
+			bw_in++;
+		}
+	}
 
 	for(size_t tuner_id = 1; tuner_id < ad936x_tuners.size(); tuner_id+=2){ //iterate over TX tuners
 		iio_channel_attr_read_double(ad936x_tuners[tuner_id].config,"rf_bandwidth", &frontend_tuner_status[tuner_id].bandwidth);
@@ -1425,8 +1460,15 @@ void AD936X_LIBIIO_i::updateTransmitBandwidth(double bandwidth){
 
 void AD936X_LIBIIO_i::updateTransmitSampleRate(double sampleRate){
 
-	if(sampleRate)
-		iio_channel_attr_write_longlong(ad936x_tuners[1].config,"sampling_frequency",(long long)sampleRate);
+	if(sampleRate){
+		double sr_in, sr_out=0.0;
+		sr_in = sampleRate;
+		while(sr_out < sampleRate){
+			iio_channel_attr_write_longlong(ad936x_tuners[1].config,"sampling_frequency",(long long)sr_in);
+			iio_channel_attr_read_double(ad936x_tuners[1].config,"sampling_frequency", &sr_out);
+			sr_in++;
+		}
+	}
 
 	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){ //iterate over all tuners
 		iio_channel_attr_read_double(ad936x_tuners[tuner_id].config,"sampling_frequency", &frontend_tuner_status[tuner_id].sample_rate);
