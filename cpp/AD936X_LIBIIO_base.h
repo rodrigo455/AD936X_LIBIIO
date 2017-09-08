@@ -42,8 +42,10 @@ class AD936X_LIBIIO_base : public frontend::FrontendTunerDevice<frontend_tuner_s
         // Member variables exposed as properties
         /// Property: global_group_id
         std::string global_group_id;
-        /// Property: global_settings
-        global_settings_struct global_settings;
+        /// Property: buffer_size
+        CORBA::Long buffer_size;
+        /// Property: fir_filter_control
+        fir_filter_control_struct fir_filter_control;
         /// Property: receive_chain
         receive_chain_struct receive_chain;
         /// Property: transmit_chain

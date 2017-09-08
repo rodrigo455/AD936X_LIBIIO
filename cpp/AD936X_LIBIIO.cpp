@@ -144,10 +144,11 @@ void AD936X_LIBIIO_i::construct() {
 void AD936X_LIBIIO_i::constructor(){
 
 	addPropertyListener(target_device, this, &AD936X_LIBIIO_i::targetDeviceChanged);
-	addPropertyListener(global_settings, this, &AD936X_LIBIIO_i::globalSettingsChanged);
+	addPropertyListener(fir_filter_control, this, &AD936X_LIBIIO_i::firFilterControlChanged);
 	addPropertyListener(receive_chain, this, &AD936X_LIBIIO_i::receiveChainChanged);
 	addPropertyListener(transmit_chain, this, &AD936X_LIBIIO_i::transmitChainChanged);
 	addPropertyListener(global_group_id, this, &AD936X_LIBIIO_i::deviceGroupIdChanged);
+	addPropertyListener(buffer_size, this, &AD936X_LIBIIO_i::bufferSizeChanged);
 
 	try{
 		initAD936x();
@@ -161,7 +162,6 @@ void AD936X_LIBIIO_i::constructor(){
 		}
 	}
 
-	//Ignoring initial setup for global_settings, receive_chain and transmit_chain
 	updateGroupId(global_group_id);
 
 	start();
@@ -183,7 +183,7 @@ int AD936X_LIBIIO_i::serviceFunctionReceive(){
 
 		if(refilled > 0){
 			nsamples = (size_t) refilled/iio_buffer_step(rx_buffer);
-			assert(nsamples == buffer_size);
+			assert(nsamples == (size_t) buffer_size);
 
 			for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id+=2){ //iterate over RX tuners
 
@@ -279,7 +279,7 @@ int AD936X_LIBIIO_i::serviceFunctionTransmit(){
 
 		pushed = iio_buffer_push(tx_buffer);
 		nsamples = (size_t) pushed/iio_buffer_step(tx_buffer);
-		assert(nsamples == buffer_size);
+		assert(nsamples == (size_t)buffer_size);
 
 		return NORMAL;
 	}
@@ -397,34 +397,35 @@ void AD936X_LIBIIO_i::targetDeviceChanged(const target_device_struct& old_value,
     }
 }
 
-void AD936X_LIBIIO_i::globalSettingsChanged(const global_settings_struct& old_value, const global_settings_struct& new_value){
+void AD936X_LIBIIO_i::firFilterControlChanged(const fir_filter_control_struct& old_value, const fir_filter_control_struct& new_value){
 	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__);
-	long long aux;
-
-	// This feature does not exist on the AD9363
-	if(target_device.type != "ad9363" && new_value.dcxo_tune_coarse != old_value.dcxo_tune_coarse){
-		iio_device_attr_write_longlong(phy,"dcxo_tune_coarse",(long long)new_value.dcxo_tune_coarse);
-		iio_device_attr_read_longlong(phy,"dcxo_tune_coarse", &aux);
-		global_settings.dcxo_tune_coarse = (CORBA::Long)aux;
-	}
-
-	// This feature does not exist on the AD9363
-	if(target_device.type != "ad9363" && new_value.dcxo_tune_fine != old_value.dcxo_tune_fine){
-		iio_device_attr_write_longlong(phy,"dcxo_tune_fine",(long long)new_value.dcxo_tune_fine);
-		iio_device_attr_read_longlong(phy,"dcxo_tune_fine", &aux);
-		global_settings.dcxo_tune_fine = (CORBA::Long)aux;
-	}
-
-	if(new_value.xo_correction != old_value.xo_correction){
-		iio_device_attr_write_longlong(phy,"xo_correction",(long long)new_value.xo_correction);
-		iio_device_attr_read_longlong(phy,"xo_correction", &aux);
-		global_settings.xo_correction = (CORBA::Long)aux;
-	}
 
 	if(new_value.filter_fir_en != old_value.filter_fir_en){
-		iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", new_value.filter_fir_en);
-		iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &global_settings.filter_fir_en);
-		if(global_settings.filter_fir_en){
+		if(fir_filter_control.auto_filter){
+			fir_filter_control.filter_fir_en = old_value.filter_fir_en;
+		}else{
+			long long current_rate;
+			iio_channel_attr_read_longlong(ad936x_tuners[1].config,"sampling_frequency", &current_rate);
+
+			if (current_rate <= (25000000 / 12)){
+				fir_filter_control.filter_fir_en = true;
+			}else{
+				fir_filter_control.filter_fir_en = new_value.filter_fir_en;
+			}
+
+			iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", fir_filter_control.filter_fir_en);
+			iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &fir_filter_control.filter_fir_en);
+		}
+	}
+
+	if(new_value.filter_fir_config != old_value.filter_fir_config){
+		if(!loadFirFilter(new_value.filter_fir_config)){
+			LOG_ERROR(AD936X_LIBIIO_i,"Could not read file: "<<new_value.filter_fir_config);
+		}else{
+			fir_filter_control.auto_filter = false;
+			iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", true);
+			iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &fir_filter_control.filter_fir_en);
+
 			{
 				enqueued_scoped_lock rx_buf_lock(rx_buffer_lock);
 				updateReceiveSampleRate(0);
@@ -438,12 +439,24 @@ void AD936X_LIBIIO_i::globalSettingsChanged(const global_settings_struct& old_va
 		}
 	}
 
-	if(new_value.filter_fir_config != old_value.filter_fir_config){
-		if(!loadFIRFilter(new_value.filter_fir_config)){
-			LOG_ERROR(AD936X_LIBIIO_i,"Cannot read file: "<<new_value.filter_fir_config);
+	if(new_value.auto_filter != old_value.auto_filter){
+		if(new_value.auto_filter){
+			long long current_rate;
+			iio_channel_attr_read_longlong(ad936x_tuners[1].config,"sampling_frequency", &current_rate);
+
+			if (ad9361_set_bb_rate(phy, current_rate)) {
+				LOG_ERROR(AD936X_LIBIIO_i,"Unable to set BB rate");
+				fir_filter_control.auto_filter = false;
+			}else{
+				fir_filter_control.filter_fir_config = "";
+				fir_filter_control.auto_filter = true;
+			}
+
+			iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &fir_filter_control.filter_fir_en);
+
+		}else{
+			fir_filter_control.auto_filter = false;
 		}
-		iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", false);
-		iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &global_settings.filter_fir_en);
 	}
 
 }
@@ -506,26 +519,14 @@ void AD936X_LIBIIO_i::receiveChainChanged(const receive_chain_struct& old_value,
 		}
 
 		if(!enabled){
+			enqueued_scoped_lock buf_lock(tx_buffer_lock);
 
-			{
-				enqueued_scoped_lock buf_lock(tx_buffer_lock);
+			if(new_value.software_decimation < 1)
+				receive_chain.software_decimation = 1;
+			else
+				receive_chain.software_decimation = new_value.software_decimation;
 
-				if(new_value.software_decimation < 1)
-					receive_chain.software_decimation = 1;
-				else
-					receive_chain.software_decimation = new_value.software_decimation;
-
-				buffer_size = size_t((buffer_size / sizeof(short))
-								/ (receive_chain.software_decimation
-										* transmit_chain.software_interpolation))
-								* (receive_chain.software_decimation
-										* transmit_chain.software_interpolation);
-			}
-
-			ad936x_tuners[0].buffer.resize(2*buffer_size/receive_chain.software_decimation);
-			if(!isAD9364)
-				ad936x_tuners[3].buffer.resize(2*buffer_size/receive_chain.software_decimation);
-
+			updateBufferSize(buffer_size);
 		}else{
 			receive_chain.software_decimation = old_value.software_decimation;
 			LOG_WARN(AD936X_LIBIIO_i,"Cannot change software decimation with enabled tuners");
@@ -576,22 +577,14 @@ void AD936X_LIBIIO_i::transmitChainChanged(const transmit_chain_struct& old_valu
 		}
 
 		if(!enabled){
+			enqueued_scoped_lock buf_lock(rx_buffer_lock);
 
-			{
-				enqueued_scoped_lock buf_lock(rx_buffer_lock);
+			if(new_value.software_interpolation < 1)
+				transmit_chain.software_interpolation = 1;
+			else
+				transmit_chain.software_interpolation = new_value.software_interpolation;
 
-				if(new_value.software_interpolation < 1)
-					transmit_chain.software_interpolation = 1;
-				else
-					transmit_chain.software_interpolation = new_value.software_interpolation;
-
-				buffer_size = size_t((buffer_size / sizeof(short))
-									/ (receive_chain.software_decimation
-											* transmit_chain.software_interpolation))
-									* (receive_chain.software_decimation
-											* transmit_chain.software_interpolation);
-			}
-
+			updateBufferSize(buffer_size);
 		}else{
 			transmit_chain.software_interpolation = old_value.software_interpolation;
 			LOG_WARN(AD936X_LIBIIO_i,"Cannot change software interpolation with enabled tuners");
@@ -603,6 +596,27 @@ void AD936X_LIBIIO_i::deviceGroupIdChanged(std::string old_value, std::string ne
 	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__);
 
 	updateGroupId(new_value);
+}
+
+void AD936X_LIBIIO_i::bufferSizeChanged(CORBA::Long old_value, CORBA::Long new_value){
+	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__);
+	bool enabled = false;
+
+	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){
+		if(frontend_tuner_status[tuner_id].enabled){
+			enabled = true;
+			break;
+		}
+	}
+
+	if(!enabled){
+		enqueued_scoped_lock rx_buf_lock(rx_buffer_lock);
+		enqueued_scoped_lock tx_buf_lock(tx_buffer_lock);
+
+		updateBufferSize(new_value);
+	}else{
+		LOG_WARN(AD936X_LIBIIO_i,"Cannot change buffer size with enabled tuners");
+	}
 }
 
 /*************************************************************
@@ -1182,6 +1196,23 @@ void AD936X_LIBIIO_i::updateGroupId(const std::string &group){
 	}
 }
 
+/**
+ * Acquire buffers lock and tuners must be disabled
+ */
+void AD936X_LIBIIO_i::updateBufferSize(CORBA::Long size){
+	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__ << " buffer_size=" << size);
+
+	buffer_size = size_t((size / sizeof(short))
+					/ (receive_chain.software_decimation
+							* transmit_chain.software_interpolation))
+					* (receive_chain.software_decimation
+							* transmit_chain.software_interpolation);
+
+	ad936x_tuners[0].buffer.resize(2*buffer_size/receive_chain.software_decimation);
+	if(!isAD9364)
+		ad936x_tuners[3].buffer.resize(2*buffer_size/receive_chain.software_decimation);
+}
+
 /*************************************************************
 	interface with ad936x device
 *************************************************************/
@@ -1195,7 +1226,7 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
     		min_CENTER_FREQ = 70000000; 	// 70 MHz
     		max_CENTER_FREQ = 6000000000; 	//  6 GHz
     		max_BANDWIDTH = 56000000; 		// 56 MHz
-    		max_SAMPLE_RATE = 20000000; 	// assume a limit?
+    		max_SAMPLE_RATE = 50000000; 	// assume a limit?
     	}else if(target_device.type == "ad9363"){
     		min_CENTER_FREQ = 325000000; 	//325 MHz
 			max_CENTER_FREQ = 3800000000; 	//3.8 GHz
@@ -1224,10 +1255,10 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
 		for (i = 0; i < nb_channels; i++)
 			iio_channel_disable(iio_device_get_channel(tx_device, i));
 
-    	const size_t max_payload_size    = (size_t) (bulkio::Const::MAX_TRANSFER_BYTES * .3);
-		buffer_size = size_t(
-				(max_payload_size / sizeof(short))
-						/ (1024 * receive_chain.software_decimation
+    	//TODO limit buffer_size (bulkio::Const::MAX_TRANSFER_BYTES)
+
+		buffer_size = CORBA::Long(
+				buffer_size / (1024 * receive_chain.software_decimation
 								* transmit_chain.software_interpolation))
 				* (1024 * receive_chain.software_decimation
 						* transmit_chain.software_interpolation);
@@ -1238,8 +1269,6 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
 			LOG_ERROR(AD936X_LIBIIO_i,"Could not find RX/TX LO iio channels!");
 			throw CF::PropertySet::InvalidConfiguration();
 		}
-
-    	//iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", true);
 
     	if(isAD9364){
 			ad936x_tuners.resize(2);
@@ -1282,20 +1311,6 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
 				throw CF::PropertySet::InvalidConfiguration();
 			}
     	}
-
-    	long long aux;
-		if(target_device.type != "ad9363"){
-			iio_device_attr_read_longlong(phy,"dcxo_tune_coarse", &aux);
-			global_settings.dcxo_tune_coarse = (CORBA::Long)aux;
-			iio_device_attr_read_longlong(phy,"dcxo_tune_fine", &aux);
-			global_settings.dcxo_tune_fine = (CORBA::Long)aux;
-		}
-		iio_device_attr_read_longlong(phy,"xo_correction", &aux);
-		global_settings.xo_correction = (CORBA::Long)aux;
-
-		iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", false);
-		global_settings.filter_fir_en = false;
-		global_settings.filter_fir_config = "";
 
     	loadCurrentConfig();
 
@@ -1381,7 +1396,11 @@ void AD936X_LIBIIO_i::updateReceiveSampleRate(double sampleRate){
 		double sr_in, sr_out=0.0;
 		sr_in = sampleRate;
 		while(sr_out < sampleRate){
-			iio_channel_attr_write_longlong(ad936x_tuners[0].config,"sampling_frequency",(long long)sr_in);
+			if(fir_filter_control.auto_filter){
+				ad9361_set_bb_rate(phy, (unsigned long)sr_in);
+			}else{
+				iio_channel_attr_write_longlong(ad936x_tuners[0].config,"sampling_frequency",(long long)sr_in);
+			}
 			iio_channel_attr_read_double(ad936x_tuners[0].config,"sampling_frequency", &sr_out);
 			sr_in++;
 		}
@@ -1464,7 +1483,11 @@ void AD936X_LIBIIO_i::updateTransmitSampleRate(double sampleRate){
 		double sr_in, sr_out=0.0;
 		sr_in = sampleRate;
 		while(sr_out < sampleRate){
-			iio_channel_attr_write_longlong(ad936x_tuners[1].config,"sampling_frequency",(long long)sr_in);
+			if(fir_filter_control.auto_filter){
+				ad9361_set_bb_rate(phy, (unsigned long)sr_in);
+			}else{
+				iio_channel_attr_write_longlong(ad936x_tuners[1].config,"sampling_frequency",(long long)sr_in);
+			}
 			iio_channel_attr_read_double(ad936x_tuners[1].config,"sampling_frequency", &sr_out);
 			sr_in++;
 		}
@@ -1636,39 +1659,68 @@ void AD936X_LIBIIO_i::tunerTransmit(size_t tuner_id, bulkio::ShortDataBlock bloc
 
 void AD936X_LIBIIO_i::loadCurrentConfig(){
 	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__);
-	char tmp[15];
 
-	// Initialize Receive Chain
-	updateReceivePort("");
-	updateReceiveFrequency(0);
-	updateReceiveBandwidth(0);
-	updateReceiveSampleRate(0);
-
-	if(target_device.type != "ad9363")
-		iio_channel_attr_read_bool(rx_LO,"external", &receive_chain.rx_lo_external);
-	iio_channel_attr_read_bool(ad936x_tuners[0].config,"quadrature_tracking_en", &receive_chain.quadrature_tracking_en);
-	iio_channel_attr_read_bool(ad936x_tuners[0].config,"bb_dc_offset_tracking_en", &receive_chain.bb_dc_offset_tracking_en);
-	iio_channel_attr_read_bool(ad936x_tuners[0].config,"rf_dc_offset_tracking_en", &receive_chain.rf_dc_offset_tracking_en);
-	iio_channel_attr_read_double(ad936x_tuners[0].config,"hardwaregain", &receive_chain.rx1_hardwaregain);
-	iio_channel_attr_read(ad936x_tuners[0].config,"gain_control_mode", tmp, sizeof(tmp));
-	receive_chain.rx1_gain_control_mode = std::string(tmp);
-	if(!isAD9364){
-		iio_channel_attr_read_double(ad936x_tuners[2].config,"hardwaregain", &receive_chain.rx2_hardwaregain);
-		iio_channel_attr_read(ad936x_tuners[2].config,"gain_control_mode", tmp, sizeof(tmp));
-		receive_chain.rx2_gain_control_mode = std::string(tmp);
+	if(!fir_filter_control.filter_fir_config.empty()){
+		fir_filter_control.auto_filter = false;
 	}
 
-	// Initialize Transmit Chain
-	updateTransmitPort("");
-	updateTransmitFrequency(0);
-	updateTransmitBandwidth(0);
-	updateTransmitSampleRate(0);
+	updateReceiveFrequency(receive_chain.frequency);
+	updateTransmitFrequency(transmit_chain.frequency);
 
-	if(target_device.type != "ad9363")
-		iio_channel_attr_read_bool(tx_LO,"external", &transmit_chain.tx_lo_external);
-	iio_channel_attr_read_double(ad936x_tuners[1].config,"hardwaregain", &transmit_chain.tx1_hardwaregain);
-	if(!isAD9364)
-		iio_channel_attr_read_double(ad936x_tuners[3].config,"hardwaregain", &transmit_chain.tx2_hardwaregain);
+	if(!fir_filter_control.auto_filter){
+		updateReceiveSampleRate(receive_chain.sampling_frequency);
+		updateTransmitSampleRate(transmit_chain.sampling_frequency);
+	}
+
+	updateReceiveBandwidth(receive_chain.rf_bandwidth);
+	updateTransmitBandwidth(receive_chain.sampling_frequency);
+
+	updateReceivePort(receive_chain.rf_port_select);
+	updateTransmitPort(transmit_chain.rf_port_select);
+
+	if(target_device.type != "ad9363"){
+		iio_channel_attr_write_bool(rx_LO,"external", receive_chain.rx_lo_external);
+		iio_channel_attr_write_bool(tx_LO,"external", transmit_chain.tx_lo_external);
+	}
+
+	iio_channel_attr_write_bool(ad936x_tuners[0].config,"quadrature_tracking_en", receive_chain.quadrature_tracking_en);
+	iio_channel_attr_write_bool(ad936x_tuners[0].config,"bb_dc_offset_tracking_en", receive_chain.bb_dc_offset_tracking_en);
+	iio_channel_attr_write_bool(ad936x_tuners[0].config,"rf_dc_offset_tracking_en", receive_chain.rf_dc_offset_tracking_en);
+
+	iio_channel_attr_write(ad936x_tuners[0].config, "gain_control_mode", receive_chain.rx1_gain_control_mode.c_str());
+	iio_channel_attr_write_longlong(ad936x_tuners[0].config,"hardwaregain", (long long)receive_chain.rx1_hardwaregain);
+	if(!isAD9364){
+		iio_channel_attr_write(ad936x_tuners[2].config, "gain_control_mode", receive_chain.rx2_gain_control_mode.c_str());
+		iio_channel_attr_write_longlong(ad936x_tuners[2].config,"hardwaregain", (long long)receive_chain.rx2_hardwaregain);
+	}
+
+	iio_channel_attr_write_longlong(ad936x_tuners[1].config,"hardwaregain", (long long)transmit_chain.tx1_hardwaregain);
+	if(!isAD9364){
+		iio_channel_attr_write_longlong(ad936x_tuners[3].config,"hardwaregain", (long long)transmit_chain.tx2_hardwaregain);
+	}
+
+	if(fir_filter_control.auto_filter){
+		updateReceiveSampleRate(receive_chain.sampling_frequency);
+		updateTransmitSampleRate(transmit_chain.sampling_frequency);
+		iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &fir_filter_control.filter_fir_en);
+	}else if(!fir_filter_control.filter_fir_config.empty()){
+
+		if(!loadFirFilter(fir_filter_control.filter_fir_config)){
+			LOG_ERROR(AD936X_LIBIIO_i,"Unable to load filter file: "<<fir_filter_control.filter_fir_config);
+			fir_filter_control.filter_fir_config = "";
+		}else{
+			iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", true);
+			iio_channel_attr_read_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", &fir_filter_control.filter_fir_en);
+
+			updateReceiveSampleRate(0);
+			updateReceiveBandwidth(0);
+			updateTransmitSampleRate(0);
+			updateTransmitBandwidth(0);
+		}
+	}else{
+		iio_channel_attr_write_bool(iio_device_find_channel(phy, "out", false),"voltage_filter_fir_en", fir_filter_control.filter_fir_en);
+	}
+
 }
 
 
@@ -1682,7 +1734,7 @@ void AD936X_LIBIIO_i::loadCurrentConfig(){
  *
  * same GNU General Public License applies here
  */
-bool AD936X_LIBIIO_i::loadFIRFilter(const std::string &filter){
+bool AD936X_LIBIIO_i::loadFirFilter(const std::string &filter){
 
 	if (filter.empty() || !iio_device_find_attr(phy, "filter_fir_config"))
 			return false;
@@ -1700,8 +1752,10 @@ bool AD936X_LIBIIO_i::loadFIRFilter(const std::string &filter){
 		} while (!(buf[0] == '-' || (buf[0] >= '0' && buf[0] <= '9')));
 
 		std::string line(buf);
-		if (line.find(',') == std::string::npos)
+		if (line.find(',') == std::string::npos){
 			LOG_ERROR(AD936X_LIBIIO_i,"Incompatible filter file");
+			return false;
+		}
 	}
 
 	ifs.seekg(0, ifs.end);

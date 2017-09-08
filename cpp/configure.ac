@@ -1,4 +1,4 @@
-AC_INIT(AD936X_LIBIIO, 1.0.0)
+AC_INIT(AD936X_LIBIIO, 2.0.0)
 AM_INIT_AUTOMAKE([nostdinc foreign])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -31,8 +31,11 @@ AC_SUBST(CONTEXTURI, $ad936x_libiio_uri)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Dependencies
-PKG_CHECK_MODULES([PROJECTDEPS], [ossie >= 2.0 omniORB4 >= 4.1.0 libiio >= 0.8 uuid])
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
+PKG_CHECK_MODULES([PROJECTDEPS], [ossie >= 2.0 omniORB4 >= 4.1.0])
 PKG_CHECK_MODULES([INTERFACEDEPS], [frontend >= 2.3, bulkio >= 2.0])
+PKG_CHECK_MODULES([AD936XDEPS], [libiio >= 0.8 libad9361])
+PKG_CHECK_MODULES([LIBUUID], [uuid])
 OSSIE_ENABLE_LOG4CXX
 AX_BOOST_BASE([1.41])
 AX_BOOST_SYSTEM

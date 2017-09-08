@@ -114,25 +114,21 @@ False: Does not need control and can just attach to any currently tasked device 
     </struct>
     <configurationkind kindtype="property"/>
   </structsequence>
-  <struct id="global_settings" mode="readwrite" name="global_settings">
+  <struct id="fir_filter_control" mode="readwrite" name="fir_filter_control">
     <simple id="filter_fir_config" name="filter_fir_config" type="string">
       <description>Complete name of the file with filter configuration</description>
-    </simple>
-    <simple id="dcxo_tune_coarse" name="dcxo_tune_coarse" type="long">
-      <description>Digital Controlled Crystal Oscillator Tuning
-sets a coarse capacitor value
-*This feature does not exist on the AD9363</description>
-    </simple>
-    <simple id="dcxo_tune_fine" name="dcxo_tune_fine" type="long">
-      <description>Digital Controlled Crystal Oscillator Tuning
-sets a fine capacitor value
-*This feature does not exist on the AD9363</description>
-    </simple>
-    <simple id="xo_correction" name="xo_correction" type="long">
-      <description>Digital correction for the oscillator offset, by telling the system the actual oscillator</description>
+      <value></value>
     </simple>
     <simple id="filter_fir_en" name="filter_fir_en" type="boolean">
       <description>Enable or Disable the RX or TX path filters</description>
+      <value>false</value>
+      <enumerations>
+        <enumeration label="On" value="true"/>
+        <enumeration label="Off" value="false"/>
+      </enumerations>
+    </simple>
+    <simple id="auto_filter" name="auto_filter" type="boolean">
+      <value>false</value>
       <enumerations>
         <enumeration label="On" value="true"/>
         <enumeration label="Off" value="false"/>
@@ -310,4 +306,9 @@ sets a fine capacitor value
     </simple>
     <configurationkind kindtype="property"/>
   </struct>
+  <simple id="buffer_size" mode="readwrite" name="buffer_size" type="long">
+    <value>32768</value>
+    <kind kindtype="property"/>
+    <action type="external"/>
+  </simple>
 </properties>

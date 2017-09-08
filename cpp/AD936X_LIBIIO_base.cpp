@@ -142,12 +142,21 @@ void AD936X_LIBIIO_base::loadProperties()
 
     device_kind = "FRONTEND::TUNER";
     device_model = "AD936X";
+    addProperty(buffer_size,
+                32768,
+                "buffer_size",
+                "buffer_size",
+                "readwrite",
+                "",
+                "external",
+                "property");
+
     frontend_listener_allocation = frontend::frontend_listener_allocation_struct();
     frontend_tuner_allocation = frontend::frontend_tuner_allocation_struct();
-    addProperty(global_settings,
-                global_settings_struct(),
-                "global_settings",
-                "global_settings",
+    addProperty(fir_filter_control,
+                fir_filter_control_struct(),
+                "fir_filter_control",
+                "fir_filter_control",
                 "readwrite",
                 "",
                 "external",

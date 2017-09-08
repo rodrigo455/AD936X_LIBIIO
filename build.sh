@@ -5,9 +5,9 @@ if [ "$1" = "rpm" ]; then
     if [ -e AD936X_LIBIIO.spec ]; then
         mydir=`dirname $0`
         tmpdir=`mktemp -d`
-        cp -r ${mydir} ${tmpdir}/AD936X_LIBIIO-1.0.0
-        tar czf ${tmpdir}/AD936X_LIBIIO-1.0.0.tar.gz --exclude=".svn" --exclude=".git" -C ${tmpdir} AD936X_LIBIIO-1.0.0
-        rpmbuild -ta ${tmpdir}/AD936X_LIBIIO-1.0.0.tar.gz
+        cp -r ${mydir} ${tmpdir}/AD936X_LIBIIO-2.0.0
+        tar czf ${tmpdir}/AD936X_LIBIIO-2.0.0.tar.gz --exclude=".svn" --exclude=".git" -C ${tmpdir} AD936X_LIBIIO-2.0.0
+        rpmbuild -ta ${tmpdir}/AD936X_LIBIIO-2.0.0.tar.gz
         rm -rf $tmpdir
     else
         echo "Missing RPM spec file in" `pwd`

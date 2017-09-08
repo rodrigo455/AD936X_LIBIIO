@@ -26,6 +26,8 @@
 #define AD936X_LIBIIO_I_IMPL_H
 
 #include <iio.h>
+#include <ad9361.h>
+
 #include "AD936X_LIBIIO_base.h"
 
 /*********************************************************************************************/
@@ -211,7 +213,6 @@ class AD936X_LIBIIO_i : public AD936X_LIBIIO_base
         struct iio_device *rx_device, *tx_device, *phy;
         struct iio_buffer *rx_buffer, *tx_buffer;
         struct iio_channel *rx_LO, *tx_LO;
-        size_t buffer_size;
         bool isAD9364;
 
         // Service Functions
@@ -230,15 +231,17 @@ class AD936X_LIBIIO_i : public AD936X_LIBIIO_base
         std::vector<extendedRFInfoPkt> TX_info_port;
         void updateRfFlowId(extendedRFInfoPkt *rf_info);
         void updateGroupId(const std::string &group);
+        void updateBufferSize(CORBA::Long size);
 
         std::string getStreamId(size_t tuner_id);
 
         // configure callbacks
         void targetDeviceChanged(const target_device_struct& old_value, const target_device_struct& new_value);
-        void globalSettingsChanged(const global_settings_struct& old_value, const global_settings_struct& new_value);
+        void firFilterControlChanged(const fir_filter_control_struct& old_value, const fir_filter_control_struct& new_value);
         void receiveChainChanged(const receive_chain_struct& old_value, const receive_chain_struct& new_value);
         void transmitChainChanged(const transmit_chain_struct& old_value, const transmit_chain_struct& new_value);
         void deviceGroupIdChanged(std::string old_value, std::string new_value);
+        void bufferSizeChanged(CORBA::Long old_value, CORBA::Long new_value);
 
         // interface with ad936x device
         void initAD936x() throw (CF::PropertySet::InvalidConfiguration);
@@ -258,7 +261,7 @@ class AD936X_LIBIIO_i : public AD936X_LIBIIO_base
         bool createTransmitBuffer();
         bool destroyTransmitBuffer();
         void loadCurrentConfig();
-        bool loadFIRFilter(const std::string &filter);
+        bool loadFirFilter(const std::string &filter);
 
     protected:
 		void construct();

@@ -15,74 +15,61 @@ typedef bulkio::connection_descriptor_struct connection_descriptor_struct;
 
 #include <frontend/fe_tuner_struct_props.h>
 
-struct global_settings_struct {
-    global_settings_struct ()
+struct fir_filter_control_struct {
+    fir_filter_control_struct ()
     {
+        filter_fir_config = "";
+        filter_fir_en = false;
+        auto_filter = false;
     };
 
     static std::string getId() {
-        return std::string("global_settings");
+        return std::string("fir_filter_control");
     };
 
     std::string filter_fir_config;
-    CORBA::Long dcxo_tune_coarse;
-    CORBA::Long dcxo_tune_fine;
-    CORBA::Long xo_correction;
     bool filter_fir_en;
+    bool auto_filter;
 };
 
-inline bool operator>>= (const CORBA::Any& a, global_settings_struct& s) {
+inline bool operator>>= (const CORBA::Any& a, fir_filter_control_struct& s) {
     CF::Properties* temp;
     if (!(a >>= temp)) return false;
     const redhawk::PropertyMap& props = redhawk::PropertyMap::cast(*temp);
     if (props.contains("filter_fir_config")) {
         if (!(props["filter_fir_config"] >>= s.filter_fir_config)) return false;
     }
-    if (props.contains("dcxo_tune_coarse")) {
-        if (!(props["dcxo_tune_coarse"] >>= s.dcxo_tune_coarse)) return false;
-    }
-    if (props.contains("dcxo_tune_fine")) {
-        if (!(props["dcxo_tune_fine"] >>= s.dcxo_tune_fine)) return false;
-    }
-    if (props.contains("xo_correction")) {
-        if (!(props["xo_correction"] >>= s.xo_correction)) return false;
-    }
     if (props.contains("filter_fir_en")) {
         if (!(props["filter_fir_en"] >>= s.filter_fir_en)) return false;
+    }
+    if (props.contains("auto_filter")) {
+        if (!(props["auto_filter"] >>= s.auto_filter)) return false;
     }
     return true;
 }
 
-inline void operator<<= (CORBA::Any& a, const global_settings_struct& s) {
+inline void operator<<= (CORBA::Any& a, const fir_filter_control_struct& s) {
     redhawk::PropertyMap props;
  
     props["filter_fir_config"] = s.filter_fir_config;
  
-    props["dcxo_tune_coarse"] = s.dcxo_tune_coarse;
- 
-    props["dcxo_tune_fine"] = s.dcxo_tune_fine;
- 
-    props["xo_correction"] = s.xo_correction;
- 
     props["filter_fir_en"] = s.filter_fir_en;
+ 
+    props["auto_filter"] = s.auto_filter;
     a <<= props;
 }
 
-inline bool operator== (const global_settings_struct& s1, const global_settings_struct& s2) {
+inline bool operator== (const fir_filter_control_struct& s1, const fir_filter_control_struct& s2) {
     if (s1.filter_fir_config!=s2.filter_fir_config)
         return false;
-    if (s1.dcxo_tune_coarse!=s2.dcxo_tune_coarse)
-        return false;
-    if (s1.dcxo_tune_fine!=s2.dcxo_tune_fine)
-        return false;
-    if (s1.xo_correction!=s2.xo_correction)
-        return false;
     if (s1.filter_fir_en!=s2.filter_fir_en)
+        return false;
+    if (s1.auto_filter!=s2.auto_filter)
         return false;
     return true;
 }
 
-inline bool operator!= (const global_settings_struct& s1, const global_settings_struct& s2) {
+inline bool operator!= (const fir_filter_control_struct& s1, const fir_filter_control_struct& s2) {
     return !(s1==s2);
 }
 
