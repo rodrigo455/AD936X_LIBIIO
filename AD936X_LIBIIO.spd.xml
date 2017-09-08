@@ -3,7 +3,7 @@
 <softpkg id="DCE:c99d9140-2d7f-4ee5-a953-2f949b8050d3" name="AD936X_LIBIIO" type="2.0.6" version="2.0.0">
   <title>REDHAWK FrontEnd Interface for the AD936x transceiver</title>
   <author>
-    <name>null</name>
+    <name>Rodrigo Alencar</name>
   </author>
   <description>FRONTEND Interfaces compliant device that requires libiio and libad9361-iio libraries to be installed.</description>
   <propertyfile type="PRF">

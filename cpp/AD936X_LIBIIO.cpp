@@ -1202,8 +1202,8 @@ void AD936X_LIBIIO_i::updateGroupId(const std::string &group){
 void AD936X_LIBIIO_i::updateBufferSize(CORBA::Long size){
 	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__ << " buffer_size=" << size);
 
-	buffer_size = size_t((size / sizeof(short))
-					/ (receive_chain.software_decimation
+	buffer_size = size_t(
+	                size / (receive_chain.software_decimation
 							* transmit_chain.software_interpolation))
 					* (receive_chain.software_decimation
 							* transmit_chain.software_interpolation);

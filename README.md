@@ -5,11 +5,12 @@
 The project is based in [REDHAWK USRP_UHD](https://github.com/RedhawkSDR/USRP_UHD) 
 and it contains the source and build script for the REDHAWK Device AD936X_LIBIIO
 device. This device is a FRONTEND Interfaces compliant device for the AD936x that
-requires the [libiio](https://github.com/analogdevicesinc/libiio) library to be installed.
+requires the [libiio](https://github.com/analogdevicesinc/libiio) and 
+[libad9361-iio](https://github.com/analogdevicesinc/libad9361-iio) libraries to be installed.
 
 ## Installation Instructions
 
-This asset requires the libiio library, which must be installed in order to build
+This asset requires the libiio and libad9361 libraries, which must be installed in order to build
 and run this asset. To build from source, run the `build.sh` script found at the
 top level directory. To install to $SDRROOT, run `build.sh install`. Note: root
 privileges (`sudo`) may be required to install.
