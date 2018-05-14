@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE softpkg PUBLIC "-//JTRS//DTD SCA V2.2.2 SPD//EN" "softpkg.dtd">
-<softpkg id="DCE:c99d9140-2d7f-4ee5-a953-2f949b8050d3" name="AD936X_LIBIIO" type="2.0.6" version="2.0.0">
+<softpkg id="DCE:c99d9140-2d7f-4ee5-a953-2f949b8050d3" name="AD936X_LIBIIO" type="2.1.2" version="2.0.1">
   <title>REDHAWK FrontEnd Interface for the AD936x transceiver</title>
   <author>
     <name>Rodrigo Alencar</name>

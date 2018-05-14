@@ -40,27 +40,27 @@ AD936X_LIBIIO_base::AD936X_LIBIIO_base(char *devMgr_ior, char *id, char *lbl, ch
 
 AD936X_LIBIIO_base::~AD936X_LIBIIO_base()
 {
-    delete RX1A_0;
+    RX1A_0->_remove_ref();
     RX1A_0 = 0;
-    delete RX1B_1;
+    RX1B_1->_remove_ref();
     RX1B_1 = 0;
-    delete RX2A_2;
+    RX2A_2->_remove_ref();
     RX2A_2 = 0;
-    delete RX2B_3;
+    RX2B_3->_remove_ref();
     RX2B_3 = 0;
-    delete DigitalTuner_in;
+    DigitalTuner_in->_remove_ref();
     DigitalTuner_in = 0;
-    delete dataShortTX_in;
+    dataShortTX_in->_remove_ref();
     dataShortTX_in = 0;
-    delete TX1A_0;
+    TX1A_0->_remove_ref();
     TX1A_0 = 0;
-    delete TX1B_1;
+    TX1B_1->_remove_ref();
     TX1B_1 = 0;
-    delete TX2A_2;
+    TX2A_2->_remove_ref();
     TX2A_2 = 0;
-    delete TX2B_3;
+    TX2B_3->_remove_ref();
     TX2B_3 = 0;
-    delete dataShortRX_out;
+    dataShortRX_out->_remove_ref();
     dataShortRX_out = 0;
 }
 
@@ -199,29 +199,6 @@ void AD936X_LIBIIO_base::loadProperties()
 
 }
 
-/* This sets the number of entries in the frontend_tuner_status struct sequence property
- * as well as the tuner_allocation_ids vector. Call this function during initialization
- */
-void AD936X_LIBIIO_base::setNumChannels(size_t num)
-{
-    this->setNumChannels(num, "RX_DIGITIZER");
-}
-/* This sets the number of entries in the frontend_tuner_status struct sequence property
- * as well as the tuner_allocation_ids vector. Call this function during initialization
- */
-
-void AD936X_LIBIIO_base::setNumChannels(size_t num, std::string tuner_type)
-{
-    frontend_tuner_status.clear();
-    frontend_tuner_status.resize(num);
-    tuner_allocation_ids.clear();
-    tuner_allocation_ids.resize(num);
-    for (std::vector<frontend_tuner_status_struct_struct>::iterator iter=frontend_tuner_status.begin(); iter!=frontend_tuner_status.end(); iter++) {
-        iter->enabled = false;
-        iter->tuner_type = tuner_type;
-    }
-}
-
 void AD936X_LIBIIO_base::frontendTunerStatusChanged(const std::vector<frontend_tuner_status_struct_struct>* oldValue, const std::vector<frontend_tuner_status_struct_struct>* newValue)
 {
     this->tuner_allocation_ids.resize(this->frontend_tuner_status.size());
@@ -293,10 +270,10 @@ void AD936X_LIBIIO_base::removeListener(const std::string& listen_alloc_id)
     ExtendedCF::UsesConnectionSequence_var tmp;
     // Check to see if port "dataShortRX_out" has a connection for this listener
     tmp = this->dataShortRX_out->connections();
-    for (unsigned int i=0; i<this->dataShortRX_out->connections()->length(); i++) {
-        std::string connection_id = ossie::corba::returnString(tmp[i].connectionId);
+    for (unsigned int i=0; i<tmp->length(); i++) {
+        const char* connection_id = tmp[i].connectionId;
         if (connection_id == listen_alloc_id) {
-            this->dataShortRX_out->disconnectPort(connection_id.c_str());
+            this->dataShortRX_out->disconnectPort(connection_id);
         }
     }
     this->connectionTableChanged(&old_table, &this->connectionTable);

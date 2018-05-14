@@ -81,9 +81,6 @@ class AD936X_LIBIIO_base : public frontend::FrontendTunerDevice<frontend_tuner_s
 
         std::map<std::string, std::string> listeners;
 
-        virtual void setNumChannels(size_t num);
-        virtual void setNumChannels(size_t num, std::string tuner_type);
-
     private:
         void construct();
 };

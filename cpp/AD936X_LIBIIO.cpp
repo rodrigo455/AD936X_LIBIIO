@@ -85,6 +85,8 @@ void AD936X_LIBIIO_i::construct() {
 	LOG_TRACE(AD936X_LIBIIO_i,__PRETTY_FUNCTION__);
 	receive_service_thread = NULL;
 	transmit_service_thread = NULL;
+	rx_buffer = NULL;
+	tx_buffer = NULL;
 
 	global_group_id = "AD936X_GROUP_ID_NOT_SET";
 

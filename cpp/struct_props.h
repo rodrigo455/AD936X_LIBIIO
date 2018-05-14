@@ -15,17 +15,37 @@ typedef bulkio::connection_descriptor_struct connection_descriptor_struct;
 
 #include <frontend/fe_tuner_struct_props.h>
 
+namespace enums {
+    // Enumerated values for fir_filter_control
+    namespace fir_filter_control {
+        // Enumerated values for filter_fir_en
+        namespace filter_fir_en {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+        // Enumerated values for auto_filter
+        namespace auto_filter {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+    }
+}
+
 struct fir_filter_control_struct {
     fir_filter_control_struct ()
     {
         filter_fir_config = "";
         filter_fir_en = false;
         auto_filter = false;
-    };
+    }
 
     static std::string getId() {
         return std::string("fir_filter_control");
-    };
+    }
+
+    static const char* getFormat() {
+        return "sbb";
+    }
 
     std::string filter_fir_config;
     bool filter_fir_en;
@@ -73,6 +93,51 @@ inline bool operator!= (const fir_filter_control_struct& s1, const fir_filter_co
     return !(s1==s2);
 }
 
+namespace enums {
+    // Enumerated values for receive_chain
+    namespace receive_chain {
+        // Enumerated values for rx_lo_external
+        namespace rx_lo_external {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+        // Enumerated values for rx_rf_port_select
+        namespace rf_port_select {
+            static const std::string A_BALANCED = "A_BALANCED";
+            static const std::string B_BALANCED = "B_BALANCED";
+        }
+        // Enumerated values for quadrature_tracking_en
+        namespace quadrature_tracking_en {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+        // Enumerated values for rf_dc_offset_tracking_en
+        namespace rf_dc_offset_tracking_en {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+        // Enumerated values for bb_dc_offset_tracking_en
+        namespace bb_dc_offset_tracking_en {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+        // Enumerated values for rx1_gain_control_mode
+        namespace rx1_gain_control_mode {
+            static const std::string manual = "manual";
+            static const std::string fast_attack = "fast_attack";
+            static const std::string slow_attack = "slow_attack";
+            static const std::string hybrid = "hybrid";
+        }
+        // Enumerated values for rx2_gain_control_mode
+        namespace rx2_gain_control_mode {
+            static const std::string manual = "manual";
+            static const std::string fast_attack = "fast_attack";
+            static const std::string slow_attack = "slow_attack";
+            static const std::string hybrid = "hybrid";
+        }
+    }
+}
+
 struct receive_chain_struct {
     receive_chain_struct ()
     {
@@ -89,11 +154,15 @@ struct receive_chain_struct {
         rx2_hardwaregain = 73;
         rx2_gain_control_mode = "slow_attack";
         software_decimation = 1;
-    };
+    }
 
     static std::string getId() {
         return std::string("receive_chain");
-    };
+    }
+
+    static const char* getFormat() {
+        return "dddbsbbbdsdsi";
+    }
 
     double rf_bandwidth;
     double sampling_frequency;
@@ -221,6 +290,22 @@ inline bool operator!= (const receive_chain_struct& s1, const receive_chain_stru
     return !(s1==s2);
 }
 
+namespace enums {
+    // Enumerated values for transmit_chain
+    namespace transmit_chain {
+        // Enumerated values for tx_lo_external
+        namespace tx_lo_external {
+            static const bool On = true;
+            static const bool Off = false;
+        }
+        // Enumerated values for tx_rf_port_select
+        namespace rf_port_select {
+            static const std::string A = "A";
+            static const std::string B = "B";
+        }
+    }
+}
+
 struct transmit_chain_struct {
     transmit_chain_struct ()
     {
@@ -232,11 +317,15 @@ struct transmit_chain_struct {
         tx1_hardwaregain = -10;
         tx2_hardwaregain = -10;
         software_interpolation = 1;
-    };
+    }
 
     static std::string getId() {
         return std::string("transmit_chain");
-    };
+    }
+
+    static const char* getFormat() {
+        return "dddbsddi";
+    }
 
     double rf_bandwidth;
     double sampling_frequency;
@@ -324,6 +413,18 @@ inline bool operator!= (const transmit_chain_struct& s1, const transmit_chain_st
     return !(s1==s2);
 }
 
+namespace enums {
+    // Enumerated values for target_device
+    namespace target_device {
+        // Enumerated values for type
+        namespace type {
+            static const std::string AD9361 = "ad9361";
+            static const std::string AD9363 = "ad9363";
+            static const std::string AD9364 = "ad9364";
+        }
+    }
+}
+
 struct target_device_struct {
     target_device_struct ()
     {
@@ -331,11 +432,15 @@ struct target_device_struct {
         type = "ad9361";
         name = "";
         serial = "";
-    };
+    }
 
     static std::string getId() {
         return std::string("target_device");
-    };
+    }
+
+    static const char* getFormat() {
+        return "ssss";
+    }
 
     std::string context_uri;
     std::string type;
@@ -394,11 +499,15 @@ inline bool operator!= (const target_device_struct& s1, const target_device_stru
 struct frontend_tuner_status_struct_struct : public frontend::default_frontend_tuner_status_struct_struct {
     frontend_tuner_status_struct_struct () : frontend::default_frontend_tuner_status_struct_struct()
     {
-    };
+    }
 
     static std::string getId() {
         return std::string("FRONTEND::tuner_status_struct");
-    };
+    }
+
+    static const char* getFormat() {
+        return "sddbssdsssdd";
+    }
 
     std::string rf_port_select;
     std::string stream_id;

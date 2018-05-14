@@ -1,11 +1,13 @@
+ACLOCAL_AMFLAGS = -I m4 -I${OSSIEHOME}/share/aclocal/ossie
+AUTOMAKE_OPTIONS = subdir-objects
+
 ossieName = AD936X_LIBIIO
 bindir = $(prefix)/dev/devices/AD936X_LIBIIO/cpp
 bin_PROGRAMS = AD936X_LIBIIO
 
 xmldir = $(prefix)/dev/devices/AD936X_LIBIIO
 dist_xml_DATA = ../AD936X_LIBIIO.scd.xml ../AD936X_LIBIIO.prf.xml ../AD936X_LIBIIO.spd.xml
-ACLOCAL_AMFLAGS = -I m4 -I${OSSIEHOME}/share/aclocal/ossie
-AUTOMAKE_OPTIONS = subdir-objects
+
 confdir = $(prefix)/dev/devices/AD936X_LIBIIO/
 dist_conf_SCRIPTS = ../nodeconfig.py
 
@@ -35,3 +37,4 @@ AD936X_LIBIIO_LDFLAGS = -Wall $(redhawk_LDFLAGS_auto)
 
 create-ad936x-libiio-node: install-am
 	../nodeconfig.py --clean --domainname=$(DOMAINNAME) --ad936xtype=$(AD936XTYPE) --ad936xcontexturi=$(CONTEXTURI)
+
