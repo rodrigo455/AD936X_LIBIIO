@@ -6,7 +6,7 @@
  *
  * This file is part of AD936X_LIBIIO.
  *
- * AD936X_LIBIIO is based on REDHAWK USRP_UHD, thus it is released under the same
+ * AD936X_LIBIIO is based on REDHAWK USRP_UHD, thus it is released under extended
  * Copyright and the same License.
  *
  * AD936X_LIBIIO is free software: you can redistribute it and/or modify it

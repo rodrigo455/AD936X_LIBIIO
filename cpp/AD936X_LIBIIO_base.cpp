@@ -69,26 +69,37 @@ void AD936X_LIBIIO_base::construct()
     loadProperties();
 
     RX1A_0 = new frontend::InRFInfoPort("RX1A_0", this);
+    RX1A_0->setLogger(this->_baseLog->getChildLogger("RX1A_0", "ports"));
     addPort("RX1A_0", RX1A_0);
     RX1B_1 = new frontend::InRFInfoPort("RX1B_1", this);
+    RX1B_1->setLogger(this->_baseLog->getChildLogger("RX1B_1", "ports"));
     addPort("RX1B_1", RX1B_1);
     RX2A_2 = new frontend::InRFInfoPort("RX2A_2", this);
+    RX2A_2->setLogger(this->_baseLog->getChildLogger("RX2A_2", "ports"));
     addPort("RX2A_2", RX2A_2);
     RX2B_3 = new frontend::InRFInfoPort("RX2B_3", this);
+    RX2B_3->setLogger(this->_baseLog->getChildLogger("RX2B_3", "ports"));
     addPort("RX2B_3", RX2B_3);
     DigitalTuner_in = new frontend::InDigitalTunerPort("DigitalTuner_in", this);
+    DigitalTuner_in->setLogger(this->_baseLog->getChildLogger("DigitalTuner_in", "ports"));
     addPort("DigitalTuner_in", DigitalTuner_in);
     dataShortTX_in = new bulkio::InShortPort("dataShortTX_in");
+    dataShortTX_in->setLogger(this->_baseLog->getChildLogger("dataShortTX_in", "ports"));
     addPort("dataShortTX_in", dataShortTX_in);
     TX1A_0 = new frontend::OutRFInfoPort("TX1A_0");
+    TX1A_0->setLogger(this->_baseLog->getChildLogger("TX1A_0", "ports"));
     addPort("TX1A_0", TX1A_0);
     TX1B_1 = new frontend::OutRFInfoPort("TX1B_1");
+    TX1B_1->setLogger(this->_baseLog->getChildLogger("TX1B_1", "ports"));
     addPort("TX1B_1", TX1B_1);
     TX2A_2 = new frontend::OutRFInfoPort("TX2A_2");
+    TX2A_2->setLogger(this->_baseLog->getChildLogger("TX2A_2", "ports"));
     addPort("TX2A_2", TX2A_2);
     TX2B_3 = new frontend::OutRFInfoPort("TX2B_3");
+    TX2B_3->setLogger(this->_baseLog->getChildLogger("TX2B_3", "ports"));
     addPort("TX2B_3", TX2B_3);
     dataShortRX_out = new bulkio::OutShortPort("dataShortRX_out");
+    dataShortRX_out->setLogger(this->_baseLog->getChildLogger("dataShortRX_out", "ports"));
     addPort("dataShortRX_out", dataShortRX_out);
 
     this->addPropertyListener(connectionTable, this, &AD936X_LIBIIO_base::connectionTableChanged);

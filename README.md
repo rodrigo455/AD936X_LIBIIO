@@ -12,17 +12,52 @@ requires the [libiio](https://github.com/analogdevicesinc/libiio) and
 
 ## Installation Instructions
 
-This asset requires the libiio and libad9361 libraries, which must be installed in order to build
-and run this asset. To build from source, run the `build.sh` script found at the
+This project requires the libiio and libad9361 libraries, which must be installed in order to build and run this asset.
+
+### libiio
+
+Follow Analog Devices' [What is libiio?](https://wiki.analog.com/resources/tools-software/linux-software/libiio#building_on_the_linux_host_target) wiki page, in order to build libiio for Debian-flavoured GNU/Linux distributions.
+
+For CentOs you're able to get the required dependencies with the command:
+```
+$ sudo yum install libxml2 libxml2-devel libaio-devel libusbx-devel avahi-devel
+```
+then you can fetch the source, build and install
+```
+$ git clone https://github.com/analogdevicesinc/libiio.git
+$ cmake ./
+$ make all
+$ sudo make install
+```
+### libad9361-iio
+
+Just fetch the source, build and install
+```
+$ git clone https://github.com/analogdevicesinc/libad9361-iio.git
+$ cmake ./
+$ make all
+$ sudo make install
+```
+### AD936X_LIBIIO
+
+You can import this project to your workspace using the REDHAWK Import Wizard, 
+build and install to $SDRROOT within the REDHAWK IDE. Otherwise run the `build.sh` script found at the
 top level directory. To install to $SDRROOT, run `build.sh install`. Note: root
 privileges (`sudo`) may be required to install.
 
 ## Copyrights
 
-This work is protected by rh.USRP_UHD's Copyright. Please refer to the
+This work is protected by Copyright. Please refer to the
 [Copyright File](COPYRIGHT) for updated copyright information.
 
 ## License
 
-AD936X LIBIIO REDHAWK DEVICE is licensed under rh.USRP_UHD's 
-GNU Lesser General Public License (LGPL).
+AD936X LIBIIO REDHAWK DEVICE is licensed under GNU Lesser General Public License (LGPL).
+
+## Troubleshooting
+
+* if building libbio, you got: `Check size of struct usb_functionfs_descs_head_v2 - failed`, use the following commands to fix it.
+```
+$ wget https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/usb/functionfs.h
+$ sudo cp functionfs.h /usr/include/linux/usb/functionfs.h
+```
