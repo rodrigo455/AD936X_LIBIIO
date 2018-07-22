@@ -2,7 +2,7 @@
  
 ## Description
 
-Note: This work must be updated. software decimation and interpolation was a featured taken from [gr-iio](https://github.com/analogdevicesinc/gr-iio) and it was removed by analogdevices, since it is indeed incorrect, because no filtering is applied. Pluto makes decimation and interpolation available in hardware that this software does not support for now.
+Note: This project is being updated. software decimation and interpolation was a featured taken from [gr-iio](https://github.com/analogdevicesinc/gr-iio) and it was removed by analogdevices, since it is indeed incorrect, because no filtering is applied.
 
 The project is based in [REDHAWK USRP_UHD](https://github.com/RedhawkSDR/USRP_UHD) 
 and it contains the source and build script for the REDHAWK Device AD936X_LIBIIO

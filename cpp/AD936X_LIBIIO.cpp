@@ -33,6 +33,8 @@
 
 #include "AD936X_LIBIIO.h"
 
+#define RATE_25MHZ 25000000
+
 static double min_CENTER_FREQ;
 static double max_CENTER_FREQ;
 static double max_BANDWIDTH;
@@ -409,7 +411,7 @@ void AD936X_LIBIIO_i::firFilterControlChanged(const fir_filter_control_struct& o
 			long long current_rate;
 			iio_channel_attr_read_longlong(ad936x_tuners[1].config,"sampling_frequency", &current_rate);
 
-			if (current_rate <= (25000000 / 12)){
+			if (current_rate <= (RATE_25MHZ / 12)){
 				fir_filter_control.filter_fir_en = true;
 			}else{
 				fir_filter_control.filter_fir_en = new_value.filter_fir_en;
@@ -1236,17 +1238,17 @@ void AD936X_LIBIIO_i::initAD936x() throw (CF::PropertySet::InvalidConfiguration)
 			max_SAMPLE_RATE = 20000000; 	// assume a limit?
     	}
 
-    	isAD9364 = (target_device.type == "ad9364")? true : false;
-
     	context = getContext(target_device.context_uri);
     	rx_device = iio_context_find_device(context, "cf-ad9361-lpc");
     	tx_device = iio_context_find_device(context, "cf-ad9361-dds-core-lpc");
     	phy = iio_context_find_device(context, "ad9361-phy");
 
     	if(!rx_device || !tx_device || !phy){
-			LOG_ERROR(AD936X_LIBIIO_i,"Could not find iio device in the context!");
+			LOG_ERROR(AD936X_LIBIIO_i,"Could not find iio devices in the context!");
 			throw CF::PropertySet::InvalidConfiguration();
 		}
+
+    	isAD9364 = (bool) !iio_device_find_channel(phy, "voltage1", false);
 
     	// First disable all channels
 		nb_channels = iio_device_get_channels_count(rx_device);
@@ -1394,22 +1396,52 @@ void AD936X_LIBIIO_i::updateReceiveBandwidth(double bandwidth){
 
 void AD936X_LIBIIO_i::updateReceiveSampleRate(double sampleRate){
 
+
 	if(sampleRate){
+
+		char buf[1024];
+		char * rates;
+		ssize_t ret;
 		double sr_in, sr_out=0.0;
-		sr_in = sampleRate;
+
+		if(sampleRate < RATE_25MHZ/12.0f){
+			/* enable pluto HDL filter */
+			ret = iio_channel_attr_read(ad936x_tuners[0].inphase,"sampling_frequency_available", buf, sizeof(buf));
+			if(ret > 0){
+				/*select second rate */
+				rates = strtok(buf," ");
+				rates = strtok(NULL," ");
+				iio_channel_attr_write(ad936x_tuners[0].inphase, "sampling_frequency", rates);
+
+				sr_in = sampleRate*8;
+			}else {
+				sr_in = sampleRate;
+			}
+		}else{
+			/* disable pluto HDL filter */
+			ret = iio_channel_attr_read(ad936x_tuners[0].inphase,"sampling_frequency_available", buf, sizeof(buf));
+			if(ret > 0){
+				/*select first rate */
+				rates = strtok(buf," ");
+				iio_channel_attr_write(ad936x_tuners[0].inphase, "sampling_frequency", rates);
+
+			}
+			sr_in = sampleRate;
+		}
+
 		while(sr_out < sampleRate){
 			if(fir_filter_control.auto_filter){
 				ad9361_set_bb_rate(phy, (unsigned long)sr_in);
 			}else{
 				iio_channel_attr_write_longlong(ad936x_tuners[0].config,"sampling_frequency",(long long)sr_in);
 			}
-			iio_channel_attr_read_double(ad936x_tuners[0].config,"sampling_frequency", &sr_out);
+			iio_channel_attr_read_double(ad936x_tuners[0].inphase,"sampling_frequency", &sr_out);
 			sr_in++;
 		}
 	}
 
 	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){ //iterate over all tuners
-		iio_channel_attr_read_double(ad936x_tuners[tuner_id].config,"sampling_frequency", &frontend_tuner_status[tuner_id].sample_rate);
+		iio_channel_attr_read_double(ad936x_tuners[tuner_id].inphase,"sampling_frequency", &frontend_tuner_status[tuner_id].sample_rate);
 		ad936x_tuners[tuner_id].update_sri = true;
 	}
 
@@ -1482,21 +1514,50 @@ void AD936X_LIBIIO_i::updateTransmitBandwidth(double bandwidth){
 void AD936X_LIBIIO_i::updateTransmitSampleRate(double sampleRate){
 
 	if(sampleRate){
+
+		char buf[1024];
+		char * rates;
+		ssize_t ret;
 		double sr_in, sr_out=0.0;
-		sr_in = sampleRate;
+
+		if(sampleRate < RATE_25MHZ/12.0f){
+			/* enable pluto HDL filter */
+			ret = iio_channel_attr_read(ad936x_tuners[1].inphase,"sampling_frequency_available", buf, sizeof(buf));
+			if(ret > 0){
+				/*select second rate */
+				rates = strtok(buf," ");
+				rates = strtok(NULL," ");
+				iio_channel_attr_write(ad936x_tuners[1].inphase, "sampling_frequency", rates);
+
+				sr_in = sampleRate*8;
+			}else {
+				sr_in = sampleRate;
+			}
+		}else{
+			/* disable pluto HDL filter */
+			ret = iio_channel_attr_read(ad936x_tuners[1].inphase,"sampling_frequency_available", buf, sizeof(buf));
+			if(ret > 0){
+				/*select first rate */
+				rates = strtok(buf," ");
+				iio_channel_attr_write(ad936x_tuners[1].inphase, "sampling_frequency", rates);
+
+			}
+			sr_in = sampleRate;
+		}
+
 		while(sr_out < sampleRate){
 			if(fir_filter_control.auto_filter){
 				ad9361_set_bb_rate(phy, (unsigned long)sr_in);
 			}else{
 				iio_channel_attr_write_longlong(ad936x_tuners[1].config,"sampling_frequency",(long long)sr_in);
 			}
-			iio_channel_attr_read_double(ad936x_tuners[1].config,"sampling_frequency", &sr_out);
+			iio_channel_attr_read_double(ad936x_tuners[1].inphase,"sampling_frequency", &sr_out);
 			sr_in++;
 		}
 	}
 
 	for(size_t tuner_id = 0; tuner_id < ad936x_tuners.size(); tuner_id++){ //iterate over all tuners
-		iio_channel_attr_read_double(ad936x_tuners[tuner_id].config,"sampling_frequency", &frontend_tuner_status[tuner_id].sample_rate);
+		iio_channel_attr_read_double(ad936x_tuners[tuner_id].inphase,"sampling_frequency", &frontend_tuner_status[tuner_id].sample_rate);
 		ad936x_tuners[tuner_id].update_sri = true;
 	}
 
@@ -1527,9 +1588,9 @@ void AD936X_LIBIIO_i::updateTransmitPort(const std::string& rf_port){
 }
 
 /*
- * This is function is called get_context taken from:
+ * This is function is called autodetect_context taken from:
  *
- * 	github.com/analogdevicesinc/gr-iio/blob/master/lib/device_source_impl.cc
+ *  github.com/analogdevicesinc/libiio/tests/iio_info.c
  *
  * Copyright 2014 Analog Devices Inc.
  * Author: Paul Cercueil <paul.cercueil@analog.com>
@@ -1538,12 +1599,52 @@ void AD936X_LIBIIO_i::updateTransmitPort(const std::string& rf_port){
  */
 struct iio_context * AD936X_LIBIIO_i::getContext(const std::string &uri){
 
-	struct iio_context *context;
+	struct iio_context *context = NULL;
 
 	if (uri.empty()) {
-		context = iio_create_default_context();
-		if (!context)
-			context = iio_create_network_context(NULL);
+		/* Autodetect context */
+
+		struct iio_scan_context *scan_ctx;
+		struct iio_context_info **info;
+		ssize_t ret;
+
+		scan_ctx = iio_create_scan_context(NULL, 0);
+		if (!scan_ctx) {
+			LOG_ERROR(AD936X_LIBIIO_i, "Unable to create scan context");
+			return context;
+		}
+
+		ret = iio_scan_context_get_info_list(scan_ctx, &info);
+		if(ret < 0){
+			char err_str[1024];
+			iio_strerror(-ret, err_str, sizeof(err_str));
+			LOG_ERROR(AD936X_LIBIIO_i, "Scanning for IIO contexts failed: "<< err_str);
+			iio_scan_context_destroy(scan_ctx);
+			return context;
+		}
+
+		if(ret == 0){
+			LOG_ERROR(AD936X_LIBIIO_i, "No IIO context found.");
+			iio_context_info_list_free(info);
+			iio_scan_context_destroy(scan_ctx);
+			return context;
+		}
+
+		for (unsigned int i = 0; i < (size_t) ret; i++) {
+
+			context = iio_create_context_from_uri(iio_context_info_get_uri(info[i]));
+
+			if(iio_context_find_device(context, "ad9361-phy")){
+				/* choose this context if there's an ad9361 phy device */
+				target_device.context_uri = iio_context_info_get_uri(info[i]);
+
+				LOG_DEBUG(AD936X_LIBIIO_i, "Context detected:"<<iio_context_info_get_description(info[i]));
+				break;
+			}
+			iio_context_destroy(context);
+			context = NULL;
+		}
+
 	}else{
 		context = iio_create_context_from_uri(uri.c_str());
 		if(!context)

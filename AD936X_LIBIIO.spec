@@ -11,7 +11,7 @@ Prefix:         %{_prefix}
 %define _infodir       %{_prefix}/info
 
 Name:           AD936X_LIBIIO
-Version:        2.0.1
+Version:        2.0.2
 Release:        1%{?dist}
 Summary:        Device %{name}
 
