@@ -25,6 +25,7 @@ $ sudo yum install libxml2 libxml2-devel libaio-devel libusbx-devel avahi-devel
 then you can fetch the source, build and install
 ```
 $ git clone https://github.com/analogdevicesinc/libiio.git
+$ cd libiio
 $ cmake ./
 $ make all
 $ sudo make install
@@ -34,6 +35,7 @@ $ sudo make install
 Just fetch the source, build and install
 ```
 $ git clone https://github.com/analogdevicesinc/libad9361-iio.git
+$ cd libad9361-iio
 $ cmake ./
 $ make all
 $ sudo make install
@@ -56,8 +58,8 @@ AD936X LIBIIO REDHAWK DEVICE is licensed under GNU Lesser General Public License
 
 ## Troubleshooting
 
-* if building libbio, you got: `Check size of struct usb_functionfs_descs_head_v2 - failed`, use the following commands to fix it.
+* if building libiio, you got: `Check size of struct usb_functionfs_descs_head_v2 - failed`, use the following commands to fix it, being able to support usb backend.
 ```
 $ wget https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/usb/functionfs.h
-$ sudo cp functionfs.h /usr/include/linux/usb/functionfs.h
+$ sudo mv functionfs.h /usr/include/linux/usb/functionfs.h
 ```
