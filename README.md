@@ -58,8 +58,18 @@ AD936X LIBIIO REDHAWK DEVICE is licensed under GNU Lesser General Public License
 
 ## Troubleshooting
 
-* if building libiio, you got: `Check size of struct usb_functionfs_descs_head_v2 - failed`, use the following commands to fix it, being able to support usb backend.
+* if during cmaking libiio, you got: `Check size of struct usb_functionfs_descs_head_v2 - failed`, use the following commands to fix it, being able to support usb backend.
 ```
 $ wget https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/usb/functionfs.h
 $ sudo mv functionfs.h /usr/include/linux/usb/functionfs.h
+```
+* if having a library linking error when executing the device, adding these lines to the `~/.bashrc` file might do the trick:
+```
+if [[ $LD_LIBRARY_PATH != *"/usr/lib64"* ]]; then
+	LD_LIBRARY_PATH=/usr/lib64:${LD_LIBRARY_PATH}
+fi
+if [[ $LD_LIBRARY_PATH != *"/usr/local/lib"* ]]; then
+	LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+fi
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 ```
